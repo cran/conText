@@ -14,8 +14,10 @@ get_nns(
   transform = TRUE,
   transform_matrix,
   bootstrap = TRUE,
-  num_bootstraps = 10,
+  num_bootstraps = 100,
+  confidence_level = 0.95,
   stem = FALSE,
+  language = "porter",
   as_list = TRUE
 )
 }
@@ -47,10 +49,18 @@ If \code{groups} defined, sampling is automatically stratified.}
 
 \item{num_bootstraps}{(integer) number of bootstraps to use.}
 
+\item{confidence_level}{(numeric in (0,1)) confidence level e.g. 0.95}
+
 \item{stem}{(logical) - whether to stem candidates when evaluating nns. Default is FALSE.
 If TRUE, candidate stems are ranked by their average cosine similarity to the target.
 We recommend you remove misspelled words from candidate set \code{candidates} as these can
 significantly influence the average.}
+
+\item{language}{the name of a recognized language, as returned by
+     \code{\link[SnowballC]{getStemLanguages}}, or a two- or three-letter ISO-639
+     code corresponding to one of these languages (see references for
+     the list of codes).
+  }
 
 \item{as_list}{(logical) if FALSE all results are combined into a single data.frame
 If TRUE, a list of data.frames is returned with one data.frame per group.}
@@ -67,6 +77,8 @@ the labels of the ALC embeddings. \code{NA} if \code{is.null(rownames(x))}.}
 and feature. Average over bootstrapped samples if bootstrap = TRUE.}
 \item{\code{std.error}}{(numeric) std. error of the similarity value.
 Column is dropped if bootstrap = FALSE.}
+\item{\code{lower.ci}}{(numeric) (if bootstrap = TRUE) lower bound of the confidence interval.}
+\item{\code{upper.ci}}{(numeric) (if bootstrap = TRUE) upper bound of the confidence interval.}
 }
 }
 \description{
@@ -82,7 +94,11 @@ library(quanteda)
 toks <- tokens(cr_sample_corpus)
 
 # build a tokenized corpus of contexts sorrounding a target term
-immig_toks <- tokens_context(x = toks, pattern = "immigr*", window = 6L)
+immig_toks <- tokens_context(x = toks, pattern = "immigration", window = 6L)
+
+# sample 100 instances of the target term, stratifying by party (only for example purposes)
+set.seed(2022L)
+immig_toks <- tokens_sample(immig_toks, size = 100, by = docvars(immig_toks, 'party'))
 
 # we limit candidates to features in our corpus
 feats <- featnames(dfm(immig_toks))
@@ -96,6 +112,9 @@ immig_party_nns <- get_nns(x = immig_toks, N = 10,
                            transform = TRUE,
                            transform_matrix = cr_transform,
                            bootstrap = TRUE,
+                           # num_bootstraps should be at least 100,
+                           # we use 10 here due to CRAN-imposed constraints
+                           # on example execution time
                            num_bootstraps = 10,
                            stem = TRUE,
                            as_list = TRUE)

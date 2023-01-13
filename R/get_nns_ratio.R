@@ -16,12 +16,14 @@
 #' re-estimate cosine similarity ratios for each sample. Required to get std. errors.
 #' If `groups` defined, sampling is automatically stratified.
 #' @param num_bootstraps (integer) number of bootstraps to use.
+#' @param confidence_level (numeric in (0,1)) confidence level e.g. 0.95
 #' @param permute (logical) if TRUE, compute empirical p-values using permutation test
 #' @param num_permutations (numeric) number of permutations to use.
 #' @param stem (logical) - whether to stem candidates when evaluating nns. Default is FALSE.
 #' If TRUE, candidate stems are ranked by their average cosine similarity to the target.
 #' We recommend you remove misspelled words from candidate set `candidates` as these can
 #' significantly influence the average.
+#' @inheritParams SnowballC::wordStem
 #' @param verbose provide information on which group is the numerator
 #'
 #' @return a `data.frame` with following columns:
@@ -32,6 +34,8 @@
 #'  and feature. Average over bootstrapped samples if bootstrap = TRUE.}
 #'  \item{`std.error`}{(numeric) std. error of the similarity value.
 #'  Column is dropped if bootstrap = FALSE.}
+#'  \item{`lower.ci`}{(numeric) (if bootstrap = TRUE) lower bound of the confidence interval.}
+#'  \item{`upper.ci`}{(numeric) (if bootstrap = TRUE) upper bound of the confidence interval.}
 #'  \item{`p.value`}{(numeric) empirical p-value of bootstrapped ratio
 #'  of cosine similarities if permute = TRUE, if FALSE, column is dropped.}
 #'  \item{`group`}{(character) group in `groups` for which feature belongs
@@ -50,7 +54,11 @@
 #' toks <- tokens(cr_sample_corpus)
 #'
 #' # build a tokenized corpus of contexts sorrounding a target term
-#' immig_toks <- tokens_context(x = toks, pattern = "immigr*", window = 6L)
+#' immig_toks <- tokens_context(x = toks, pattern = "immigration", window = 6L)
+#'
+#' # sample 100 instances of the target term, stratifying by party (only for example purposes)
+#' set.seed(2022L)
+#' immig_toks <- tokens_sample(immig_toks, size = 100, by = docvars(immig_toks, 'party'))
 #'
 #' # we limit candidates to features in our corpus
 #' feats <- featnames(dfm(immig_toks))
@@ -66,9 +74,12 @@
 #'                                  transform = TRUE,
 #'                                  transform_matrix = cr_transform,
 #'                                  bootstrap = TRUE,
-#'                                  num_bootstraps = 5,
+#'                                  # num_bootstraps should be at least 100,
+#'                                  # we use 10 here due to CRAN-imposed constraints
+#'                                  # on example execution time
+#'                                  num_bootstraps = 10,
 #'                                  permute = TRUE,
-#'                                  num_permutations = 5,
+#'                                  num_permutations = 10,
 #'                                  verbose = FALSE)
 #'
 #' head(immig_nns_ratio)
@@ -81,21 +92,29 @@ get_nns_ratio <- function(x,
                           transform = TRUE,
                           transform_matrix,
                           bootstrap = TRUE,
-                          num_bootstraps = 10,
+                          num_bootstraps = 100,
+                          confidence_level = 0.95,
                           permute = TRUE,
                           num_permutations = 100,
                           stem = FALSE,
+                          language = 'porter',
                           verbose = TRUE){
 
   # initial checks
   if(class(x)[1] != "tokens") stop("data must be of class tokens")
+  if(bootstrap && (confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
+  if(bootstrap && num_bootstraps < 100) warning('num_bootstraps must be at least 100') # check num_bootstraps >= 100
 
   # checks
-  group_vars <- unique(groups)
+  group_vars <- as.character(unique(groups))
   if(is.null(group_vars) | length(group_vars)!=2) stop("a binary grouping variable must be provided")
   if(!is.null(numerator)){
     if(!(numerator %in% group_vars)) stop("numerator must refer to one of the two groups in the groups argument")
-  }
+    numerator <- as.character(numerator)
+  }else{
+    numerator <- group_vars[1]
+    cat("NOTE: setting", numerator, "as the numerator", "\n")
+    }
   denominator <- setdiff(group_vars, numerator)
 
   # add grouping variable to docvars
@@ -114,7 +133,7 @@ get_nns_ratio <- function(x,
   if(length(candidates) > 0) candidates <- intersect(candidates, rownames(pre_trained))
 
   # get top N nns (if N is Inf or NULL, use all features)
-  nnsdfs <- nns(x = wvs, N = Inf, candidates = candidates, pre_trained = pre_trained, stem = stem, as_list = TRUE)
+  nnsdfs <- nns(x = wvs, N = Inf, candidates = candidates, pre_trained = pre_trained, stem = stem, language = language, as_list = TRUE)
   nnsdf1 <- if(is.null(N)) nnsdfs[[numerator]]$feature else nnsdfs[[numerator]]$feature[1:N]
   nnsdf2 <- if(is.null(N)) nnsdfs[[denominator]]$feature else nnsdfs[[denominator]]$feature[1:N]
 
@@ -124,29 +143,32 @@ get_nns_ratio <- function(x,
   if(!bootstrap){
 
     # find nearest neighbors ratio
-    result <- nns_ratio(x = wvs, N = N, numerator = numerator, candidates = candidates, pre_trained = pre_trained, stem = stem) %>% dplyr::filter(feature %in% union_nns)
+    result <- nns_ratio(x = wvs, N = N, numerator = numerator, candidates = candidates, pre_trained = pre_trained, stem = stem, language = language) %>% dplyr::filter(feature %in% union_nns)
 
   }else{
 
     cat('starting bootstraps \n')
     # bootstrap ratio
     nnsratiodf_bs <- replicate(num_bootstraps,
-                               nns_ratio_boostrap(x = x,
-                                       groups = groups,
+                               nns_ratio_boostrap(x = x_dem,
+                                       groups = x_dem@docvars$group,
                                        numerator = numerator,
                                        candidates = candidates,
                                        pre_trained = pre_trained,
-                                       transform = transform,
-                                       transform_matrix = transform_matrix,
-                                       stem = stem),
+                                       stem = stem,
+                                       language = language),
                           simplify = FALSE)
     result <- do.call(rbind, nnsratiodf_bs) %>%
       dplyr::group_by(feature) %>%
+      dplyr::mutate(lower.ci = dplyr::nth(value, round((1-confidence_level)*num_bootstraps), order_by = value),
+                    upper.ci = dplyr::nth(value, round(confidence_level*num_bootstraps), order_by = value)) %>%
       dplyr::summarise(std.error = sd(value),
-                value = mean(value),
-                .groups = 'keep') %>%
+                       value = mean(value),
+                       lower.ci = mean(lower.ci),
+                       upper.ci = mean(upper.ci),
+                       .groups = 'keep') %>%
       dplyr::ungroup() %>%
-      dplyr::select('feature','value', 'std.error') %>%
+      dplyr::select('feature','value', 'std.error', 'lower.ci', 'upper.ci') %>%
       dplyr::filter(feature %in% union_nns) %>%
       dplyr::arrange(-value)
 
@@ -166,7 +188,8 @@ get_nns_ratio <- function(x,
                                                                  pre_trained = pre_trained,
                                                                  transform = transform,
                                                                  transform_matrix = transform_matrix,
-                                                                 stem = stem),
+                                                                 stem = stem,
+                                                                 language = language),
                              simplify = FALSE)
 
     # compute deviations of the observed ratios from 1
@@ -199,25 +222,17 @@ nns_ratio_boostrap <- function(x,
                          numerator = NULL,
                          candidates = character(0),
                          pre_trained = pre_trained,
-                         transform = TRUE,
-                         transform_matrix = transform_matrix,
-                         stem = stem){
+                         stem = stem,
+                         language = language){
 
-
-  # sample tokens with replacement
-  x <- quanteda::tokens_sample(x = x, size = table(groups), replace = TRUE, by = groups)
-
-  # create document-feature matrix
-  x_dfm <- quanteda::dfm(x, tolower = FALSE)
-
-  # compute document-embedding matrix
-  x_dem <- dem(x = x_dfm, pre_trained = pre_trained, transform = transform, transform_matrix = transform_matrix, verbose = FALSE)
+  # sample dems with replacement
+  x_sample_dem <- dem_sample(x = x, size = nrow(x), replace = TRUE, by = groups)
 
   # aggregate dems by group
-  wvs <- dem_group(x = x_dem, groups = x_dem@docvars$group)
+  wvs <- dem_group(x = x_sample_dem, groups = x_sample_dem@docvars$group)
 
   # find nearest neighbors
-  result <- nns_ratio(x = wvs, N = NULL, numerator = numerator, candidates = candidates, pre_trained = pre_trained, stem = stem, verbose = FALSE)
+  result <- nns_ratio(x = wvs, N = NULL, numerator = numerator, candidates = candidates, pre_trained = pre_trained, stem = stem, language = language, verbose = FALSE)
 
   return(result)
 
@@ -231,7 +246,8 @@ nns_ratio_permute <- function(x,
                               pre_trained,
                               transform = TRUE,
                               transform_matrix,
-                              stem = stem){
+                              stem = stem,
+                              language = language){
 
   # shuffle tokenized texts
   quanteda::docvars(x, 'group') <- sample(groups)
@@ -246,7 +262,7 @@ nns_ratio_permute <- function(x,
   wvs <- dem_group(x = x_dem, groups = x_dem@docvars$group)
 
   # find nearest neighbors
-  result <- nns_ratio(x = wvs, N = NULL, numerator = numerator, candidates = candidates, pre_trained = pre_trained, stem = stem, verbose = FALSE)
+  result <- nns_ratio(x = wvs, N = NULL, numerator = numerator, candidates = candidates, pre_trained = pre_trained, stem = stem, language = language, verbose = FALSE)
 
   return(result)
 }
