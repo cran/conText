@@ -59,10 +59,7 @@
 #'                            transform = TRUE,
 #'                            transform_matrix = cr_transform,
 #'                            bootstrap = TRUE,
-#'                            # num_bootstraps should be at least 100,
-#'                            # we use 10 here due to CRAN-imposed constraints
-#'                            # on example execution time
-#'                            num_bootstraps = 10,
+#'                            num_bootstraps = 100,
 #'                            stem = TRUE,
 #'                            as_list = TRUE)
 #'
@@ -84,8 +81,15 @@ get_nns <- function(x,
 
   # initial checks
   if(bootstrap && (confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
-  if(bootstrap && num_bootstraps < 100) warning('num_bootstraps must be at least 100') # check num_bootstraps >= 100
+  if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100') # check num_bootstraps >= 100
   if(class(x)[1] != "tokens") stop("data must be of class tokens")
+
+  # stemming check
+  if(stem){
+    if (requireNamespace("SnowballC", quietly = TRUE)) {
+      cat('Using', language, 'for stemming. To check available languages run "SnowballC::getStemLanguages()"', '\n')
+    } else stop('"SnowballC (>= 0.7.0)" package must be installed to use stemmming option.')
+  }
 
   # add grouping variable to docvars
   if(!is.null(groups)) quanteda::docvars(x) <- NULL; quanteda::docvars(x, "group") <- groups
@@ -136,7 +140,7 @@ get_nns <- function(x,
   }
 
   # find nearest neighbors
-  result <- nns(x = wvs, N = N, candidates = candidates, pre_trained = pre_trained, stem = stem, as_list = FALSE)
+  result <- nns(x = wvs, N = N, candidates = candidates, pre_trained = pre_trained, stem = stem, as_list = FALSE, show_language = FALSE)
   }
 
   # if !as_list return a list object with an item for each target data.frame
@@ -157,7 +161,7 @@ nns_boostrap <- function(x,
                          as_list = FALSE){
 
   # sample dems with replacement
-  x_sample_dem <- dem_sample(x = x, size = nrow(x), replace = TRUE, by = groups)
+  x_sample_dem <- dem_sample(x = x, size = 1, replace = TRUE, by = groups)
 
   # aggregate dems by group var if defined
   if(!is.null(by)){
@@ -167,7 +171,7 @@ nns_boostrap <- function(x,
   }
 
   # find nearest neighbors
-  result <- nns(x = wvs, N = Inf, candidates = candidates, pre_trained = pre_trained, stem = stem, as_list = as_list)
+  result <- nns(x = wvs, N = Inf, candidates = candidates, pre_trained = pre_trained, stem = stem, as_list = as_list, show_language = FALSE)
 
   return(result)
 

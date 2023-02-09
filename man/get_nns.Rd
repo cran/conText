@@ -112,10 +112,7 @@ immig_party_nns <- get_nns(x = immig_toks, N = 10,
                            transform = TRUE,
                            transform_matrix = cr_transform,
                            bootstrap = TRUE,
-                           # num_bootstraps should be at least 100,
-                           # we use 10 here due to CRAN-imposed constraints
-                           # on example execution time
-                           num_bootstraps = 10,
+                           num_bootstraps = 100,
                            stem = TRUE,
                            as_list = TRUE)
 

@@ -104,10 +104,7 @@ get_cos_sim(x = immig_toks,
             transform = TRUE,
             transform_matrix = cr_transform,
             bootstrap = TRUE,
-            # num_bootstraps should be at least 100,
-            # we use 10 here due to CRAN-imposed constraints
-            # on example execution time
-            num_bootstraps = 10,
+            num_bootstraps = 100,
             confidence_level = 0.95,
             stem = TRUE,
             as_list = FALSE)

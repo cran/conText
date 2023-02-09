@@ -73,13 +73,10 @@
 #'                                  pre_trained = cr_glove_subset,
 #'                                  transform = TRUE,
 #'                                  transform_matrix = cr_transform,
-#'                                  bootstrap = TRUE,
-#'                                  # num_bootstraps should be at least 100,
-#'                                  # we use 10 here due to CRAN-imposed constraints
-#'                                  # on example execution time
-#'                                  num_bootstraps = 10,
-#'                                  permute = TRUE,
-#'                                  num_permutations = 10,
+#'                                  bootstrap = FALSE,
+#'                                  num_bootstraps = 100,
+#'                                  permute = FALSE,
+#'                                  num_permutations = 5,
 #'                                  verbose = FALSE)
 #'
 #' head(immig_nns_ratio)
@@ -98,12 +95,20 @@ get_nns_ratio <- function(x,
                           num_permutations = 100,
                           stem = FALSE,
                           language = 'porter',
-                          verbose = TRUE){
+                          verbose = TRUE,
+                          show_language = TRUE){
 
   # initial checks
   if(class(x)[1] != "tokens") stop("data must be of class tokens")
   if(bootstrap && (confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
-  if(bootstrap && num_bootstraps < 100) warning('num_bootstraps must be at least 100') # check num_bootstraps >= 100
+  if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100') # check num_bootstraps >= 100
+
+  # stemming check
+  if(stem){
+    if (requireNamespace("SnowballC", quietly = TRUE)) {
+      cat('Using', language, 'for stemming. To check available languages run "SnowballC::getStemLanguages()"', '\n')
+    } else stop('"SnowballC (>= 0.7.0)" package must be installed to use stemmming option.')
+  }
 
   # checks
   group_vars <- as.character(unique(groups))
@@ -133,7 +138,7 @@ get_nns_ratio <- function(x,
   if(length(candidates) > 0) candidates <- intersect(candidates, rownames(pre_trained))
 
   # get top N nns (if N is Inf or NULL, use all features)
-  nnsdfs <- nns(x = wvs, N = Inf, candidates = candidates, pre_trained = pre_trained, stem = stem, language = language, as_list = TRUE)
+  nnsdfs <- nns(x = wvs, N = Inf, candidates = candidates, pre_trained = pre_trained, stem = stem, language = language, as_list = TRUE, show_language = FALSE)
   nnsdf1 <- if(is.null(N)) nnsdfs[[numerator]]$feature else nnsdfs[[numerator]]$feature[1:N]
   nnsdf2 <- if(is.null(N)) nnsdfs[[denominator]]$feature else nnsdfs[[denominator]]$feature[1:N]
 
@@ -143,7 +148,7 @@ get_nns_ratio <- function(x,
   if(!bootstrap){
 
     # find nearest neighbors ratio
-    result <- nns_ratio(x = wvs, N = N, numerator = numerator, candidates = candidates, pre_trained = pre_trained, stem = stem, language = language) %>% dplyr::filter(feature %in% union_nns)
+    result <- nns_ratio(x = wvs, N = N, numerator = numerator, candidates = candidates, pre_trained = pre_trained, stem = stem, language = language, show_language = FALSE) %>% dplyr::filter(feature %in% union_nns)
 
   }else{
 
@@ -226,13 +231,13 @@ nns_ratio_boostrap <- function(x,
                          language = language){
 
   # sample dems with replacement
-  x_sample_dem <- dem_sample(x = x, size = nrow(x), replace = TRUE, by = groups)
+  x_sample_dem <- dem_sample(x = x, size = 1, replace = TRUE, by = groups)
 
   # aggregate dems by group
   wvs <- dem_group(x = x_sample_dem, groups = x_sample_dem@docvars$group)
 
   # find nearest neighbors
-  result <- nns_ratio(x = wvs, N = NULL, numerator = numerator, candidates = candidates, pre_trained = pre_trained, stem = stem, language = language, verbose = FALSE)
+  result <- nns_ratio(x = wvs, N = NULL, numerator = numerator, candidates = candidates, pre_trained = pre_trained, stem = stem, language = language, verbose = FALSE, show_language = FALSE)
 
   return(result)
 
@@ -262,7 +267,7 @@ nns_ratio_permute <- function(x,
   wvs <- dem_group(x = x_dem, groups = x_dem@docvars$group)
 
   # find nearest neighbors
-  result <- nns_ratio(x = wvs, N = NULL, numerator = numerator, candidates = candidates, pre_trained = pre_trained, stem = stem, language = language, verbose = FALSE)
+  result <- nns_ratio(x = wvs, N = NULL, numerator = numerator, candidates = candidates, pre_trained = pre_trained, stem = stem, language = language, verbose = FALSE, show_language = FALSE)
 
   return(result)
 }

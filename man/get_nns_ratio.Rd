@@ -21,7 +21,8 @@ get_nns_ratio(
   num_permutations = 100,
   stem = FALSE,
   language = "porter",
-  verbose = TRUE
+  verbose = TRUE,
+  show_language = TRUE
 )
 }
 \arguments{
@@ -74,6 +75,8 @@ significantly influence the average.}
   }
 
 \item{verbose}{provide information on which group is the numerator}
+
+\item{show_language}{(logical) if TRUE print out message with language used for stemming.}
 }
 \value{
 a \code{data.frame} with following columns:
@@ -126,13 +129,10 @@ immig_nns_ratio <- get_nns_ratio(x = immig_toks,
                                  pre_trained = cr_glove_subset,
                                  transform = TRUE,
                                  transform_matrix = cr_transform,
-                                 bootstrap = TRUE,
-                                 # num_bootstraps should be at least 100,
-                                 # we use 10 here due to CRAN-imposed constraints
-                                 # on example execution time
-                                 num_bootstraps = 10,
-                                 permute = TRUE,
-                                 num_permutations = 10,
+                                 bootstrap = FALSE,
+                                 num_bootstraps = 100,
+                                 permute = FALSE,
+                                 num_permutations = 5,
                                  verbose = FALSE)
 
 head(immig_nns_ratio)

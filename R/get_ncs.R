@@ -56,10 +56,7 @@
 #'                            transform = TRUE,
 #'                            transform_matrix = cr_transform,
 #'                            bootstrap = TRUE,
-#'                            # num_bootstraps should be at least 100,
-#'                            # we use 10 here due to CRAN-imposed constraints
-#'                            # on example execution time
-#'                            num_bootstraps = 10,
+#'                            num_bootstraps = 100,
 #'                            confidence_level = 0.95,
 #'                            as_list = TRUE)
 #'
@@ -145,7 +142,7 @@ ncs_bootstrap <- function(x = NULL,
                           as_list = FALSE){
 
   # sample dems with replacement
-  x_sample_dem <- dem_sample(x = x, size = nrow(x), replace = TRUE, by = by)
+  x_sample_dem <- dem_sample(x = x, size = 1, replace = TRUE, by = by)
 
   # aggregate dems by group var if defined
   if(!is.null(by)){

@@ -43,12 +43,9 @@
 #'                                  pre_trained = cr_glove_subset,
 #'                                  transform = TRUE,
 #'                                  transform_matrix = cr_transform,
-#'                                  bootstrap = TRUE,
-#'                                  # num_bootstraps should be at least 100,
-#'                                  # we use 10 here due to CRAN-imposed constraints
-#'                                  # on example execution time
-#'                                  num_bootstraps = 10,
-#'                                  permute = TRUE,
+#'                                  bootstrap = FALSE,
+#'                                  num_bootstraps = 100,
+#'                                  permute = FALSE,
 #'                                  num_permutations = 10,
 #'                                  verbose = FALSE)
 #'

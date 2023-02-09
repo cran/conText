@@ -49,10 +49,7 @@
 #' pre_trained = cr_glove_subset,
 #' transform = TRUE, transform_matrix = cr_transform,
 #' bootstrap = TRUE,
-#' # num_bootstraps should be at least 100,
-#' # we use 10 here due to CRAN-imposed constraints
-#' # on example execution time
-#' num_bootstraps = 10,
+#' num_bootstraps = 100,
 #' confidence_level = 0.95,
 #' permute = TRUE, num_permutations = 10,
 #' candidates = NULL, N = 20,
@@ -63,7 +60,7 @@ contrast_nns <- function(x, groups = NULL, pre_trained = NULL, transform = TRUE,
 
   # checks
   if(bootstrap && (confidence_level >= 1 || confidence_level<=0)) stop('"confidence_level" must be a numeric value between 0 and 1.', call. = FALSE) # check confidence level is between 0 and 1
-  if(bootstrap && num_bootstraps < 100) warning('num_bootstraps must be at least 100') # check num_bootstraps >= 100
+  if(bootstrap && num_bootstraps < 100) stop('num_bootstraps must be at least 100') # check num_bootstraps >= 100
   if(class(x)[1] != "tokens") stop("data must be of class tokens")
   groupvals <- unique(groups)
   if(length(groupvals)!=2) stop("groups must be binary")

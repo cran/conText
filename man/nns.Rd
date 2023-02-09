@@ -12,7 +12,8 @@ nns(
   pre_trained,
   stem = FALSE,
   language = "porter",
-  as_list = TRUE
+  as_list = TRUE,
+  show_language = TRUE
 )
 }
 \arguments{
@@ -42,6 +43,8 @@ significantly influence the average.}
 
 \item{as_list}{(logical) if FALSE all results are combined into a single data.frame
 If TRUE, a list of data.frames is returned with one data.frame per group.}
+
+\item{show_language}{(logical) if TRUE print out message with language used for stemming.}
 }
 \value{
 a \code{data.frame} or list of data.frames (one for each target)
@@ -82,6 +85,6 @@ immig_wv_party <- dem_group(immig_dem, groups = immig_dem@docvars$party)
 # setting as_list = FALSE combines each group's
 # results into a single tibble (useful for joint plotting)
 immig_nns <- nns(immig_wv_party, pre_trained = cr_glove_subset,
-N = 5, candidates = immig_wv_party@features, stem = TRUE, as_list = TRUE)
+N = 5, candidates = immig_wv_party@features, stem = FALSE, as_list = TRUE)
 }
 \keyword{nns}
