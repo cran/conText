@@ -26,8 +26,9 @@
 #' @keywords fem
 #' @examples
 #'
+#' \dontrun{
+#' # example exceeds CRAN CPU time to elapsed time limit
 #' library(quanteda)
-#'
 #' # tokenize corpus
 #' toks <- tokens(cr_sample_corpus)
 #'
@@ -38,6 +39,8 @@
 #' # compute feature-embedding matrix
 #' toks_fem <- fem(toks_fcm, pre_trained = cr_glove_subset,
 #' transform = TRUE, transform_matrix = cr_transform, verbose = FALSE)
+#' }
+
 fem <- function(x, pre_trained, transform = TRUE, transform_matrix, verbose = TRUE){
 
   # checks
@@ -75,8 +78,8 @@ fem <- function(x, pre_trained, transform = TRUE, transform_matrix, verbose = TR
   # create `fem` class object
   result <- build_fem(Class = 'fem',
                      x_fem = result,
-                     features = overlapping_features,
-                     counts = x@meta$object$margin[overlapping_features],
+                     features = rownames(context_embedding),
+                     counts = x@meta$object$margin[rownames(context_embedding)],
                      Dimnames = list(
                        rows = rownames(x)[included],
                        columns = NULL))

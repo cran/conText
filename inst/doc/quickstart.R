@@ -1,23 +1,25 @@
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 knitr::opts_chunk$set(collapse = FALSE,
+                      dpi = 72,
+                      warning = FALSE,
+                      message = FALSE,
                       comment = "##",
                       tidy = FALSE)
 
-## ---- eval=FALSE--------------------------------------------------------------
-#  install.packages("conText")
+## ----eval=FALSE---------------------------------------------------------------
+# install.packages("conText")
 
-## ---- eval=FALSE--------------------------------------------------------------
-#  devtools::install_github("prodriguezsosa/conText")
+## ----eval=FALSE---------------------------------------------------------------
+# devtools::install_github("prodriguezsosa/conText")
 
-## ---- message=FALSE-----------------------------------------------------------
+## ----message=FALSE------------------------------------------------------------
 library(conText)
-
 # other libraries used in this guide
 library(quanteda)
 library(dplyr)
 library(text2vec)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 # tokenize corpus removing unnecessary (i.e. semantically uninformative) elements
 toks <- tokens(cr_sample_corpus, remove_punct=T, remove_symbols=T, remove_numbers=T, remove_separators=T)
 
@@ -30,17 +32,17 @@ feats <- dfm(toks_nostop, tolower=T, verbose = FALSE) %>% dfm_trim(min_termfreq 
 # leave the pads so that non-adjacent words will not become adjacent
 toks_nostop_feats <- tokens_select(toks_nostop, feats, padding = TRUE)
 
-## ---- message = FALSE---------------------------------------------------------
-# build a tokenized corpus of contexts sorrounding the target term "immigration"
+## ----message = FALSE----------------------------------------------------------
+# build a tokenized corpus of contexts surrounding the target term "immigration"
 immig_toks <- tokens_context(x = toks_nostop_feats, pattern = "immigr*", window = 6L)
 head(docvars(immig_toks), 3)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 # build document-feature matrix
 immig_dfm <- dfm(immig_toks)
 immig_dfm[1:3,1:3]
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 # build a document-embedding-matrix
 immig_dem <- dem(x = immig_dfm, pre_trained = cr_glove_subset, transform = TRUE, transform_matrix = cr_transform, verbose = TRUE)
 
@@ -54,12 +56,12 @@ immig_dem <- dem(x = immig_dfm, pre_trained = cr_glove_subset, transform = TRUE,
 # vector of features used to create the embeddings
 #head(immig_dem@features)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 # to get a single "corpus-wide" embedding, take the column average
 immig_wv <- matrix(colMeans(immig_dem), ncol = ncol(immig_dem)) %>%  `rownames<-`("immigration")
 dim(immig_wv)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 # to get group-specific embeddings, average within party
 immig_wv_party <- dem_group(immig_dem, groups = immig_dem@docvars$party)
 dim(immig_wv_party)
@@ -78,7 +80,7 @@ cos_sim(immig_wv_party, pre_trained = cr_glove_subset, features = c('reform', 'e
 
 ## -----------------------------------------------------------------------------
 # compute the cosine similarity between each party's embedding and a specific set of features
-nns_ratio(x = immig_wv_party, N = 10, numerator = "R", candidates = immig_wv_party@features, pre_trained = cr_glove_subset, verbose = FALSE)
+nns_ratio(x = immig_wv_party, N = 5, numerator = "R", candidates = immig_wv_party@features, pre_trained = cr_glove_subset, verbose = FALSE)
 
 ## -----------------------------------------------------------------------------
 
@@ -93,13 +95,13 @@ immig_ncs[["R"]]
 immig_ncs <- ncs(x = immig_wv_party["R",], contexts_dem = immig_dem[immig_dem@docvars$party == "R",], contexts = immig_toks, N = 5, as_list = FALSE)
 
 
-## -----------------------------------------------------------------------------
+## ----warning=F, message=F-----------------------------------------------------
 # extract candidate features from the dem object
 immig_feats <- immig_wv_party@features
 
 # check spelling. toupper avoids names being considered misspelled
 if (requireNamespace("hunspell", quietly = TRUE)) { 
-  library(hunspell) # spellcheck library
+  library(hunspell) # spell check library
   spellcheck <-  hunspell_check(toupper(immig_feats), dict = hunspell::dictionary("en_US"))
   immig_feats <- immig_feats[spellcheck]
   }
@@ -110,8 +112,8 @@ immig_nns_stem <- nns(immig_wv_party, pre_trained = cr_glove_subset, N = 5, cand
 # check out results for Republican party
 immig_nns_stem[["R"]]
 
-## ---- message = FALSE---------------------------------------------------------
-# build a corpus of contexts sorrounding the target term "immigration"
+## ----message = FALSE----------------------------------------------------------
+# build a corpus of contexts surrounding the target term "immigration"
 mkws_toks <- tokens_context(x = toks_nostop_feats, pattern = c("immigration", "welfare", "immigration reform", "economy"), window = 6L, verbose = FALSE)
 
 # create document-feature matrix
@@ -124,13 +126,13 @@ mkws_dem <- dem(x = mkws_dfm, pre_trained = cr_glove_subset, transform = TRUE, t
 mkws_wvs <- dem_group(mkws_dem, groups = mkws_dem@docvars$pattern)
 
 # find nearest neighbors for each keyword
-mkws_nns <- nns(mkws_wvs, pre_trained = cr_glove_subset, N = 5, candidates = mkws_wvs@features, as_list = TRUE)
+mkws_nns <- nns(mkws_wvs, pre_trained = cr_glove_subset, N = 3, candidates = mkws_wvs@features, as_list = TRUE)
 
 # to check results for a given pattern
 mkws_nns[["immigration reform"]]
 
-## ---- message = FALSE---------------------------------------------------------
-# build a corpus of contexts sorrounding the immigration related words
+## ----message = FALSE----------------------------------------------------------
+# build a corpus of contexts surrounding the immigration related words
 topical_toks <- tokens_context(x = toks_nostop_feats, pattern = c("immigration", "immigrant", "immigration reform"), window = 6L, verbose = FALSE)
 
 # create document-feature matrix
@@ -145,7 +147,7 @@ topical_wvs <- dem_group(topical_dem, groups = topical_dem@docvars$party)
 # find nearest neighbors for each keyword
 nns(topical_wvs, pre_trained = cr_glove_subset, N = 5, candidates = topical_wvs@features, stem = TRUE, as_list = FALSE)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 
 # we limit candidates to features in our corpus
 feats <- featnames(dfm(immig_toks))
@@ -166,7 +168,7 @@ immig_party_nns <- get_nns(x = immig_toks, N = 10,
 # nearest neighbors of "immigration" for Republican party
 immig_party_nns[["R"]]
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 
 # compute the cosine similarity between each group's embedding and a specific set of features
 set.seed(2021L)
@@ -180,7 +182,7 @@ get_cos_sim(x = immig_toks,
             num_bootstraps = 100,
             as_list = FALSE)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 
 # we limit candidates to features in our corpus
 feats <- featnames(dfm(immig_toks))
@@ -203,10 +205,10 @@ immig_nns_ratio <- get_nns_ratio(x = immig_toks,
 
 head(immig_nns_ratio)
 
-## ---- eval=TRUE---------------------------------------------------------------
-plot_nns_ratio(x = immig_nns_ratio, alpha = 0.01, horizontal = TRUE)
+## ----eval=FALSE---------------------------------------------------------------
+# plot_nns_ratio(x = immig_nns_ratio, alpha = 0.01, horizontal = TRUE)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 # compare nearest neighbors between groups
 set.seed(2021L)
 immig_party_ncs <- get_ncs(x = immig_toks,
@@ -222,23 +224,42 @@ immig_party_ncs <- get_ncs(x = immig_toks,
 # nearest neighbors of "immigration" for Republican party
 immig_party_ncs[["R"]]
 
-## ---- message = FALSE---------------------------------------------------------
-
+## ----message = FALSE----------------------------------------------------------
 # two factor covariates
 set.seed(2021L)
 model1 <- conText(formula = immigration ~ party + gender,
                   data = toks_nostop_feats,
                   pre_trained = cr_glove_subset,
                   transform = TRUE, transform_matrix = cr_transform,
-                  bootstrap = TRUE, num_bootstraps = 100,
+                  jackknife = FALSE, confidence_level = 0.95,
+                  cluster_variable = NULL,
                   permute = TRUE, num_permutations = 100,
                   window = 6, case_insensitive = TRUE,
-                  verbose = FALSE)
+                  verbose = TRUE)
 
 # notice, non-binary covariates are automatically "dummified"
 rownames(model1)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message=FALSE, eval=FALSE------------------------------------------------
+# require(doParallel)
+# registerDoParallel(4)
+# set.seed(2021L)
+# model1 <- conText(formula = immigration ~ party + gender,
+#                   data = toks_nostop_feats,
+#                   pre_trained = cr_glove_subset,
+#                   transform = TRUE, transform_matrix = cr_transform,
+#                   jackknife = TRUE, confidence_level = 0.95,
+#                   parallel = TRUE,
+#                   cluster_variable = NULL,
+#                   permute = TRUE, num_permutations = 100,
+#                   window = 6, case_insensitive = TRUE,
+#                   verbose = TRUE)
+
+## ----eval=FALSE---------------------------------------------------------------
+# require(devtools)
+# install_version("conText", version = "1.4.2", repos = "http://cran.us.r-project.org")
+
+## ----message = FALSE----------------------------------------------------------
 
 # D-dimensional beta coefficients
 # the intercept in this case is the ALC embedding for female Democrats
@@ -251,10 +272,10 @@ RM_wv <- model1['(Intercept)',] + model1['party_R',] + model1['gender_M',] # (R)
 # nearest neighbors
 nns(rbind(DF_wv,DM_wv), N = 10, pre_trained = cr_glove_subset, candidates = model1@features)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 model1@normed_coefficients
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 
 # continuous covariate
 set.seed(2021L)
@@ -262,7 +283,7 @@ model2 <- conText(formula = immigration ~ nominate_dim1,
                   data = toks_nostop_feats,
                   pre_trained = cr_glove_subset,
                   transform = TRUE, transform_matrix = cr_transform,
-                  bootstrap = TRUE, num_bootstraps = 100,
+                  jackknife = FALSE, confidence_level = 0.95,
                   permute = TRUE, num_permutations = 100,
                   window = 6, case_insensitive = TRUE,
                   verbose = FALSE)
@@ -273,10 +294,10 @@ percentile_wvs <- lapply(percentiles, function(i) model2["(Intercept)",] + i*mod
 percentile_sim <- cos_sim(x = percentile_wvs, pre_trained = cr_glove_subset, features = c("reform", "enforce"), as_list = TRUE)
 
 # check output
-rbind(head(percentile_sim[["reform"]], 5),tail(percentile_sim[["reform"]], 5))
-rbind(head(percentile_sim[["enforce"]], 5),tail(percentile_sim[["enforce"]], 5))
+rbind(head(percentile_sim[["reform"]], 2),tail(percentile_sim[["reform"]], 2))
+rbind(head(percentile_sim[["enforce"]], 2),tail(percentile_sim[["enforce"]], 2))
 
-## ---- message=FALSE-----------------------------------------------------------
+## ----message=FALSE------------------------------------------------------------
 library(text2vec)
 
 #---------------------------------
@@ -301,14 +322,14 @@ local_glove <- wv_main + t(wv_context) # word vectors
 # qualitative check
 find_nns(local_glove['immigration',], pre_trained = local_glove, N = 5, candidates = feats)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 # compute transform
 # weighting = 'log' works well for smaller corpora
 # for large corpora use a numeric value e.g. weighting = 500
 # see: https://arxiv.org/pdf/1805.05388.pdf
 local_transform <- compute_transform(x = toks_fcm, pre_trained = local_glove, weighting = 'log')
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 #---------------------------------
 # check
 #---------------------------------
@@ -319,18 +340,18 @@ immig_dem_local <- dem(x = immig_dfm, pre_trained = local_glove, transform = TRU
 # take the column average to get a single "corpus-wide" embedding
 immig_wv_local <- colMeans(immig_dem_local)
 
-# find nearest neighbors for overall immigraiton embedding
+# find nearest neighbors for overall immigration embedding
 find_nns(immig_wv_local, pre_trained = local_glove, N = 10, candidates = immig_dem_local@features)
 
 # we can also compare to corresponding pre-trained embedding
 sim2(x = matrix(immig_wv_local, nrow = 1), y = matrix(local_glove['immigration',], nrow = 1), method = 'cosine', norm = 'l2')
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 # create feature co-occurrence matrix for each party (set tri = FALSE to work with fem)
 fcm_D <- fcm(toks_nostop_feats[docvars(toks_nostop_feats, 'party') == "D",], context = "window", window = 6, count = "frequency", tri = FALSE)
 fcm_R <- fcm(toks_nostop_feats[docvars(toks_nostop_feats, 'party') == "R",], context = "window", window = 6, count = "frequency", tri = FALSE)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 
 # compute feature-embedding matrix
 fem_D <- fem(fcm_D, pre_trained = cr_glove_subset, transform = TRUE, transform_matrix = cr_transform, verbose = FALSE)
@@ -339,7 +360,7 @@ fem_R <- fem(fcm_R, pre_trained = cr_glove_subset, transform = TRUE, transform_m
 # cr_fem will contain an embedding for each feature
 fem_D[1:5,1:3]
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 
 # compute "horizontal" cosine similarity
 feat_comp <- feature_sim(x = fem_R, y = fem_D)
@@ -350,7 +371,7 @@ head(feat_comp)
 # most similar features
 tail(feat_comp)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 
 # identify documents with fewer than 100 words
 short_toks <- toks_nostop_feats[sapply(toks_nostop_feats, length) <= 100,]
@@ -360,7 +381,7 @@ model3 <- conText(formula = . ~ party,
                   data = short_toks,
                   pre_trained = cr_glove_subset,
                   transform = TRUE, transform_matrix = cr_transform,
-                  bootstrap = TRUE, num_bootstraps = 100,
+                  jackknife = FALSE, confidence_level = 0.95,
                   permute = TRUE, num_permutations = 100,
                   window = 6, case_insensitive = TRUE,
                   verbose = FALSE)

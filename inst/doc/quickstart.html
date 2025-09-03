@@ -646,16 +646,15 @@ Guide</a>).</p>
 <h1 id="setup">Setup</h1>
 <h2 id="installing-the-package">Installing the package</h2>
 <p>You can install the package directly from CRAN:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;conText&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;conText&quot;</span>)</span></code></pre></div>
 <p>Or, for the latest development version, from GitHub:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;prodriguezsosa/conText&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;prodriguezsosa/conText&quot;</span>)</span></code></pre></div>
 <h2 id="load-package">Load package</h2>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(conText)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># other libraries used in this guide</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(quanteda)</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(text2vec)</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">library</span>(conText)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co"># other libraries used in this guide</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="fu">library</span>(quanteda)</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="fu">library</span>(text2vec)</span></code></pre></div>
 <h1 id="data">Data</h1>
 <p>To use <strong>conText</strong> you will need three objects:</p>
 <ol style="list-style-type: decimal">
@@ -669,7 +668,7 @@ embeddings.</li>
 <code>cr_sample_corpus</code>, <code>cr_glove_subset</code> and
 <code>cr_transform</code>. Note, these are only meant to illustrate
 function implementations, keep in mind their (small) size when
-interepreting results. We’ve made available the full versions of these
+interpreting results. We’ve made available the full versions of these
 objects <a href="https://www.dropbox.com/sh/6dfr3i6no6nzvm0/AADqk6HFTvZJGNyu3FuO62kGa?dl=0">here</a>.</p>
 <h2 id="pre-processing">Pre-processing</h2>
 <p>Pre-processing is always context-specific (no pun intended). We
@@ -681,17 +680,17 @@ is generally a good idea to set <code>padding = TRUE</code> in
 <code>tokens_select()</code> to avoid making non-adjacent words adjacent
 prior to computing the embeddings. This is increasingly important as
 more features are removed.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># tokenize corpus removing unnecessary (i.e. semantically uninformative) elements</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>toks <span class="ot">&lt;-</span> <span class="fu">tokens</span>(cr_sample_corpus, <span class="at">remove_punct=</span>T, <span class="at">remove_symbols=</span>T, <span class="at">remove_numbers=</span>T, <span class="at">remove_separators=</span>T)</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># clean out stopwords and words with 2 or fewer characters</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>toks_nostop <span class="ot">&lt;-</span> <span class="fu">tokens_select</span>(toks, <span class="at">pattern =</span> <span class="fu">stopwords</span>(<span class="st">&quot;en&quot;</span>), <span class="at">selection =</span> <span class="st">&quot;remove&quot;</span>, <span class="at">min_nchar=</span><span class="dv">3</span>)</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># only use features that appear at least 5 times in the corpus</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>feats <span class="ot">&lt;-</span> <span class="fu">dfm</span>(toks_nostop, <span class="at">tolower=</span>T, <span class="at">verbose =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span> <span class="fu">dfm_trim</span>(<span class="at">min_termfreq =</span> <span class="dv">5</span>) <span class="sc">%&gt;%</span> <span class="fu">featnames</span>()</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co"># leave the pads so that non-adjacent words will not become adjacent</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>toks_nostop_feats <span class="ot">&lt;-</span> <span class="fu">tokens_select</span>(toks_nostop, feats, <span class="at">padding =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># tokenize corpus removing unnecessary (i.e. semantically uninformative) elements</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>toks <span class="ot">&lt;-</span> <span class="fu">tokens</span>(cr_sample_corpus, <span class="at">remove_punct=</span>T, <span class="at">remove_symbols=</span>T, <span class="at">remove_numbers=</span>T, <span class="at">remove_separators=</span>T)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co"># clean out stopwords and words with 2 or fewer characters</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>toks_nostop <span class="ot">&lt;-</span> <span class="fu">tokens_select</span>(toks, <span class="at">pattern =</span> <span class="fu">stopwords</span>(<span class="st">&quot;en&quot;</span>), <span class="at">selection =</span> <span class="st">&quot;remove&quot;</span>, <span class="at">min_nchar=</span><span class="dv">3</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co"># only use features that appear at least 5 times in the corpus</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>feats <span class="ot">&lt;-</span> <span class="fu">dfm</span>(toks_nostop, <span class="at">tolower=</span>T, <span class="at">verbose =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span> <span class="fu">dfm_trim</span>(<span class="at">min_termfreq =</span> <span class="dv">5</span>) <span class="sc">%&gt;%</span> <span class="fu">featnames</span>()</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co"># leave the pads so that non-adjacent words will not become adjacent</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>toks_nostop_feats <span class="ot">&lt;-</span> <span class="fu">tokens_select</span>(toks_nostop, feats, <span class="at">padding =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <h1 id="the-building-blocks-of-a-la-carte-embeddings">The building
 blocks of ‘a la carte’ embeddings</h1>
 <p>Suppose we are interested in the semantics surrounding the word
@@ -712,12 +711,12 @@ are a quanteda <code>tokens</code> objects. Each document in
 (<code>docvars</code>) of the document from whence it came, along with a
 column registering the corresponding pattern. This information can be
 retrieved using <code>docvars()</code>.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># build a tokenized corpus of contexts sorrounding the target term &quot;immigration&quot;</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>immig_toks <span class="ot">&lt;-</span> <span class="fu">tokens_context</span>(<span class="at">x =</span> toks_nostop_feats, <span class="at">pattern =</span> <span class="st">&quot;immigr*&quot;</span>, <span class="at">window =</span> 6L)</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># build a tokenized corpus of contexts surrounding the target term &quot;immigration&quot;</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>immig_toks <span class="ot">&lt;-</span> <span class="fu">tokens_context</span>(<span class="at">x =</span> toks_nostop_feats, <span class="at">pattern =</span> <span class="st">&quot;immigr*&quot;</span>, <span class="at">window =</span> <span class="dv">6</span><span class="dt">L</span>)</span></code></pre></div>
 <pre><code>## 125 instances of &quot;immigrant&quot; found.
 ## 288 instances of &quot;immigrants&quot; found.
 ## 924 instances of &quot;immigration&quot; found.</code></pre>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">docvars</span>(immig_toks), <span class="dv">3</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">docvars</span>(immig_toks), <span class="dv">3</span>)</span></code></pre></div>
 <pre><code>##       pattern party gender nominate_dim1
 ## 1  immigrants     D      F        -0.759
 ## 2 immigration     D      F        -0.402
@@ -728,9 +727,9 @@ document-feature-matrix</h2>
 corresponding document-feature-matrix, namely a matrix where each row
 represents a given document’s vector of feature counts. We do this using
 quanteda’s <code>dfm()</code> function.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># build document-feature matrix</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>immig_dfm <span class="ot">&lt;-</span> <span class="fu">dfm</span>(immig_toks)</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>immig_dfm[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>]</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># build document-feature matrix</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>immig_dfm <span class="ot">&lt;-</span> <span class="fu">dfm</span>(immig_toks)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>immig_dfm[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>]</span></code></pre></div>
 <pre><code>## Document-feature matrix of: 3 documents, 3 features (66.67% sparse) and 4 docvars.
 ##        features
 ## docs    institutions moral stood
@@ -759,32 +758,32 @@ pre-trained embeddings will be used in computing a document’s embedding.
 Documents with no features overlapping with the pre-trained provided are
 dropped. <code>dem()</code> –outputs a ‘dem-class’ object which is
 similar in many ways to ‘dfm-class’ object. Importantly, a ‘dem-class’
-object inherits all the documenta variables, ‘docvars’, from the ‘dfm’
+object inherits all the document variables, ‘docvars’, from the ‘dfm’
 used to compute it (except those of documents that could not be
 embedded). Additionally, a ‘dem-class’ object will store other useful
 attributes, including the names of the documents that were embedded and
 the vector of features used.</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># build a document-embedding-matrix</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>immig_dem <span class="ot">&lt;-</span> <span class="fu">dem</span>(<span class="at">x =</span> immig_dfm, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">transform =</span> <span class="cn">TRUE</span>, <span class="at">transform_matrix =</span> cr_transform, <span class="at">verbose =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># each document inherits its corresponding docvars</span></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co">#head(immig_dem@docvars)</span></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="co"># you can check which documents were not embedded due to lack of overlapping features (in this example all documents are embedded)</span></span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="co"># note: &#39;quanteda&#39; functions like `docvars()` and `docnames()` don&#39;t work on `dem` objects, so you will have to call the attributes directly. </span></span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="co">#setdiff(docnames(immig_dfm), immig_dem@Dimnames$docs)</span></span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="co"># vector of features used to create the embeddings</span></span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="co">#head(immig_dem@features)</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># build a document-embedding-matrix</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>immig_dem <span class="ot">&lt;-</span> <span class="fu">dem</span>(<span class="at">x =</span> immig_dfm, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">transform =</span> <span class="cn">TRUE</span>, <span class="at">transform_matrix =</span> cr_transform, <span class="at">verbose =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co"># each document inherits its corresponding docvars</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#head(immig_dem@docvars)</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co"># you can check which documents were not embedded due to lack of overlapping features (in this example all documents are embedded)</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co"># note: &#39;quanteda&#39; functions like `docvars()` and `docnames()` don&#39;t work on `dem` objects, so you will have to call the attributes directly. </span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co">#setdiff(docnames(immig_dfm), immig_dem@Dimnames$docs)</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a></span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="co"># vector of features used to create the embeddings</span></span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a><span class="co">#head(immig_dem@features)</span></span></code></pre></div>
 <h2 id="id_4-average-over-document-embeddings">4. Average over document
 embeddings</h2>
 <p>We now have an ALC embedding for each instance of “immigration” in
 our sample corpus. To get a single corpus-wide ALC embedding for
 “immigration”, we can simply take the column-average of the
 single-instance ALC embeddings.</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># to get a single &quot;corpus-wide&quot; embedding, take the column average</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>immig_wv <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">colMeans</span>(immig_dem), <span class="at">ncol =</span> <span class="fu">ncol</span>(immig_dem)) <span class="sc">%&gt;%</span>  <span class="st">`</span><span class="at">rownames&lt;-</span><span class="st">`</span>(<span class="st">&quot;immigration&quot;</span>)</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(immig_wv)</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># to get a single &quot;corpus-wide&quot; embedding, take the column average</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>immig_wv <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">colMeans</span>(immig_dem), <span class="at">ncol =</span> <span class="fu">ncol</span>(immig_dem)) <span class="sc">%&gt;%</span>  <span class="st">`</span><span class="at">rownames&lt;-</span><span class="st">`</span>(<span class="st">&quot;immigration&quot;</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="fu">dim</span>(immig_wv)</span></code></pre></div>
 <pre><code>## [1]   1 300</code></pre>
 <p>However, we are usually interested in exploring semantic differences
 across groups. To do so, we can average using a grouping variable
@@ -793,9 +792,9 @@ defined by one or a combination of the ‘docvars’. We do this using
 <a href="https://tutorials.quanteda.io/basic-operations/dfm/dfm_group/"><code>dfm_group()</code></a>).
 In our example below, this results in an ALC embedding of “immigration”
 for each party, hence the dimensions <span class="math inline">\(2\)</span> by <span class="math inline">\(300\)</span>.</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># to get group-specific embeddings, average within party</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>immig_wv_party <span class="ot">&lt;-</span> <span class="fu">dem_group</span>(immig_dem, <span class="at">groups =</span> immig_dem<span class="sc">@</span>docvars<span class="sc">$</span>party)</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(immig_wv_party)</span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co"># to get group-specific embeddings, average within party</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>immig_wv_party <span class="ot">&lt;-</span> <span class="fu">dem_group</span>(immig_dem, <span class="at">groups =</span> immig_dem<span class="sc">@</span>docvars<span class="sc">$</span>party)</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="fu">dim</span>(immig_wv_party)</span></code></pre></div>
 <pre><code>## [1]   2 300</code></pre>
 <h2 id="id_5-comparing-group-embeddings">5. Comparing group
 embeddings</h2>
@@ -809,12 +808,12 @@ to limit the set of features we want <code>nns</code> to consider as
 candidate nearest neighbors. In this example we limit candidates to
 those features that appear in our corpus (otherwise, any word in the set
 of pre-trained embeddings can be a candidate).</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># find nearest neighbors by party</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co"># setting as_list = FALSE combines each group&#39;s results into a single tibble (useful for joint plotting)</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>immig_nns <span class="ot">&lt;-</span> <span class="fu">nns</span>(immig_wv_party, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">N =</span> <span class="dv">5</span>, <span class="at">candidates =</span> immig_wv_party<span class="sc">@</span>features, <span class="at">as_list =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co"># check out results for Republican party</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>immig_nns[[<span class="st">&quot;R&quot;</span>]]</span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="co"># find nearest neighbors by party</span></span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="co"># setting as_list = FALSE combines each group&#39;s results into a single tibble (useful for joint plotting)</span></span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>immig_nns <span class="ot">&lt;-</span> <span class="fu">nns</span>(immig_wv_party, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">N =</span> <span class="dv">5</span>, <span class="at">candidates =</span> immig_wv_party<span class="sc">@</span>features, <span class="at">as_list =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a><span class="co"># check out results for Republican party</span></span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>immig_nns[[<span class="st">&quot;R&quot;</span>]]</span></code></pre></div>
 <pre><code>## # A tibble: 5 × 4
 ##   target feature      rank value
 ##   &lt;chr&gt;  &lt;chr&gt;       &lt;int&gt; &lt;dbl&gt;
@@ -832,8 +831,8 @@ how does each party’s understanding of immigration compare on the
 data) suggest Democrats are more prone to speak of “reform” in the
 context of “immigration” whereas Republicans are more likely to speak of
 “enforcement”.</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># compute the cosine similarity between each party&#39;s embedding and a specific set of features</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cos_sim</span>(immig_wv_party, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">features =</span> <span class="fu">c</span>(<span class="st">&#39;reform&#39;</span>, <span class="st">&#39;enforcement&#39;</span>), <span class="at">as_list =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="co"># compute the cosine similarity between each party&#39;s embedding and a specific set of features</span></span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="fu">cos_sim</span>(immig_wv_party, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">features =</span> <span class="fu">c</span>(<span class="st">&#39;reform&#39;</span>, <span class="st">&#39;enforcement&#39;</span>), <span class="at">as_list =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
 <pre><code>##   target     feature     value
 ## 1      D      reform 0.5949757
 ## 2      R      reform 0.4270958
@@ -854,26 +853,18 @@ feature is more (less) discriminant of the group in the numerator
 group represents the numerator in this ratio. If <code>N</code> is
 defined, this ratio is computed for union of the top <code>N</code>
 nearest neighbors.</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># compute the cosine similarity between each party&#39;s embedding and a specific set of features</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">nns_ratio</span>(<span class="at">x =</span> immig_wv_party, <span class="at">N =</span> <span class="dv">10</span>, <span class="at">numerator =</span> <span class="st">&quot;R&quot;</span>, <span class="at">candidates =</span> immig_wv_party<span class="sc">@</span>features, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
-<pre><code>##          feature     value
-## 1        enforce 1.2076754
-## 2        illegal 1.1834716
-## 3        amnesty 1.1716428
-## 4      illegally 1.1232888
-## 5           laws 1.0893494
-## 6          legal 1.0261909
-## 7     immigrants 1.0070933
-## 8         border 1.0043546
-## 9    enforcement 0.9850108
-## 10   immigration 0.9809758
-## 11     immigrant 0.9118817
-## 12  undocumented 0.9008638
-## 13        broken 0.7631982
-## 14 comprehensive 0.7248641
-## 15        reform 0.7178373</code></pre>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="co"># compute the cosine similarity between each party&#39;s embedding and a specific set of features</span></span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a><span class="fu">nns_ratio</span>(<span class="at">x =</span> immig_wv_party, <span class="at">N =</span> <span class="dv">5</span>, <span class="at">numerator =</span> <span class="st">&quot;R&quot;</span>, <span class="at">candidates =</span> immig_wv_party<span class="sc">@</span>features, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<pre><code>##        feature     value
+## 1      illegal 1.1834716
+## 2      amnesty 1.1716428
+## 3    illegally 1.1232888
+## 4   immigrants 1.0070933
+## 5  immigration 0.9809758
+## 6 undocumented 0.9008638
+## 7       broken 0.7631982</code></pre>
 <h3 id="nearest-contexts">Nearest contexts</h3>
-<p>We are used to hearing about “nearet neighbors” when it comes to
+<p>We are used to hearing about “nearest neighbors” when it comes to
 interpreting word embeddings. However, it is often the case that nearest
 neighbors –i.e. single words– without any context are hard to interpret.
 For this reason we introduce “nearest contexts” – contexts around a
@@ -882,12 +873,12 @@ the ALC embedding of that term. To explore nearest contexts we use the
 <code>ncs()</code> function. <code>ncs()</code> computes the cosine
 similarities between the ALC (group) embeddings and the single-instance
 ALC embeddings of the underlying contexts.</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># compute the cosine similarity between each party&#39;s embedding and a set of tokenized contexts</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>immig_ncs <span class="ot">&lt;-</span> <span class="fu">ncs</span>(<span class="at">x =</span> immig_wv_party, <span class="at">contexts_dem =</span> immig_dem, <span class="at">contexts =</span> immig_toks, <span class="at">N =</span> <span class="dv">5</span>, <span class="at">as_list =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co"># nearest contexts to Republican embedding of target term</span></span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="co"># note, these may included contexts originating from Democrat speakers</span></span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>immig_ncs[[<span class="st">&quot;R&quot;</span>]]</span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="co"># compute the cosine similarity between each party&#39;s embedding and a set of tokenized contexts</span></span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>immig_ncs <span class="ot">&lt;-</span> <span class="fu">ncs</span>(<span class="at">x =</span> immig_wv_party, <span class="at">contexts_dem =</span> immig_dem, <span class="at">contexts =</span> immig_toks, <span class="at">N =</span> <span class="dv">5</span>, <span class="at">as_list =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a><span class="co"># nearest contexts to Republican embedding of target term</span></span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a><span class="co"># note, these may included contexts originating from Democrat speakers</span></span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a>immig_ncs[[<span class="st">&quot;R&quot;</span>]]</span></code></pre></div>
 <pre><code>## # A tibble: 5 × 4
 ##   target context                                                      rank value
 ##   &lt;chr&gt;  &lt;chr&gt;                                                       &lt;int&gt; &lt;dbl&gt;
@@ -896,8 +887,8 @@ ALC embeddings of the underlying contexts.</p>
 ## 3 R      immigration law prior illegal immigration reform responsib…     3 0.785
 ## 4 R      good thing immigration illegal immigration legal mean mean…     4 0.773
 ## 5 R      going cost hardworking taxpayers america suggest can good …     5 0.758</code></pre>
-<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># you can limit candidate contexts to those of a specific party</span></span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>immig_ncs <span class="ot">&lt;-</span> <span class="fu">ncs</span>(<span class="at">x =</span> immig_wv_party[<span class="st">&quot;R&quot;</span>,], <span class="at">contexts_dem =</span> immig_dem[immig_dem<span class="sc">@</span>docvars<span class="sc">$</span>party <span class="sc">==</span> <span class="st">&quot;R&quot;</span>,], <span class="at">contexts =</span> immig_toks, <span class="at">N =</span> <span class="dv">5</span>, <span class="at">as_list =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="co"># you can limit candidate contexts to those of a specific party</span></span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a>immig_ncs <span class="ot">&lt;-</span> <span class="fu">ncs</span>(<span class="at">x =</span> immig_wv_party[<span class="st">&quot;R&quot;</span>,], <span class="at">contexts_dem =</span> immig_dem[immig_dem<span class="sc">@</span>docvars<span class="sc">$</span>party <span class="sc">==</span> <span class="st">&quot;R&quot;</span>,], <span class="at">contexts =</span> immig_toks, <span class="at">N =</span> <span class="dv">5</span>, <span class="at">as_list =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
 <h2 id="stemming">Stemming</h2>
 <p>All functions to explore nearest neighbors –<code>nns</code>,
 <code>cos_sim</code>, <code>nns_ratio</code>– have to option to add
@@ -910,26 +901,21 @@ this average e.g. “reformedthesystem”, we recommend you remove
 misspelled words from the candidate set <code>candidates</code> (you can
 automate this using the <code>hunspell</code> library). See example
 below.</p>
-<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># extract candidate features from the dem object</span></span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>immig_feats <span class="ot">&lt;-</span> immig_wv_party<span class="sc">@</span>features</span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="co"># check spelling. toupper avoids names being considered misspelled</span></span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">requireNamespace</span>(<span class="st">&quot;hunspell&quot;</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) { </span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(hunspell) <span class="co"># spellcheck library</span></span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  spellcheck <span class="ot">&lt;-</span>  <span class="fu">hunspell_check</span>(<span class="fu">toupper</span>(immig_feats), <span class="at">dict =</span> hunspell<span class="sc">::</span><span class="fu">dictionary</span>(<span class="st">&quot;en_US&quot;</span>))</span>
-<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  immig_feats <span class="ot">&lt;-</span> immig_feats[spellcheck]</span>
-<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  }</span></code></pre></div>
-<pre><code>## 
-## Attaching package: &#39;hunspell&#39;
-
-## The following object is masked from &#39;package:quanteda&#39;:
-## 
-##     dictionary</code></pre>
-<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># find nearest neighbors by party using stemming</span></span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>immig_nns_stem <span class="ot">&lt;-</span> <span class="fu">nns</span>(immig_wv_party, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">N =</span> <span class="dv">5</span>, <span class="at">candidates =</span> immig_feats, <span class="at">stem =</span> <span class="cn">TRUE</span>, <span class="at">as_list =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a><span class="co"># extract candidate features from the dem object</span></span>
+<span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a>immig_feats <span class="ot">&lt;-</span> immig_wv_party<span class="sc">@</span>features</span>
+<span id="cb25-3"><a href="#cb25-3" tabindex="-1"></a></span>
+<span id="cb25-4"><a href="#cb25-4" tabindex="-1"></a><span class="co"># check spelling. toupper avoids names being considered misspelled</span></span>
+<span id="cb25-5"><a href="#cb25-5" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">requireNamespace</span>(<span class="st">&quot;hunspell&quot;</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) { </span>
+<span id="cb25-6"><a href="#cb25-6" tabindex="-1"></a>  <span class="fu">library</span>(hunspell) <span class="co"># spell check library</span></span>
+<span id="cb25-7"><a href="#cb25-7" tabindex="-1"></a>  spellcheck <span class="ot">&lt;-</span>  <span class="fu">hunspell_check</span>(<span class="fu">toupper</span>(immig_feats), <span class="at">dict =</span> hunspell<span class="sc">::</span><span class="fu">dictionary</span>(<span class="st">&quot;en_US&quot;</span>))</span>
+<span id="cb25-8"><a href="#cb25-8" tabindex="-1"></a>  immig_feats <span class="ot">&lt;-</span> immig_feats[spellcheck]</span>
+<span id="cb25-9"><a href="#cb25-9" tabindex="-1"></a>  }</span>
+<span id="cb25-10"><a href="#cb25-10" tabindex="-1"></a></span>
+<span id="cb25-11"><a href="#cb25-11" tabindex="-1"></a><span class="co"># find nearest neighbors by party using stemming</span></span>
+<span id="cb25-12"><a href="#cb25-12" tabindex="-1"></a>immig_nns_stem <span class="ot">&lt;-</span> <span class="fu">nns</span>(immig_wv_party, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">N =</span> <span class="dv">5</span>, <span class="at">candidates =</span> immig_feats, <span class="at">stem =</span> <span class="cn">TRUE</span>, <span class="at">as_list =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <pre><code>## Using porter for stemming. To check available languages run &quot;SnowballC::getStemLanguages()&quot;</code></pre>
-<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># check out results for Republican party</span></span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>immig_nns_stem[[<span class="st">&quot;R&quot;</span>]]</span></code></pre></div>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a><span class="co"># check out results for Republican party</span></span>
+<span id="cb27-2"><a href="#cb27-2" tabindex="-1"></a>immig_nns_stem[[<span class="st">&quot;R&quot;</span>]]</span></code></pre></div>
 <pre><code>## # A tibble: 5 × 4
 ##   target feature  rank value
 ##   &lt;chr&gt;  &lt;chr&gt;   &lt;int&gt; &lt;dbl&gt;
@@ -943,31 +929,29 @@ below.</p>
 we can also explore the semantics of multiple targets simultaneously,
 including phrases! We simply provide a vector of patterns in the
 <code>pattern</code> argument of <code>tokens_context()</code>.</p>
-<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># build a corpus of contexts sorrounding the target term &quot;immigration&quot;</span></span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>mkws_toks <span class="ot">&lt;-</span> <span class="fu">tokens_context</span>(<span class="at">x =</span> toks_nostop_feats, <span class="at">pattern =</span> <span class="fu">c</span>(<span class="st">&quot;immigration&quot;</span>, <span class="st">&quot;welfare&quot;</span>, <span class="st">&quot;immigration reform&quot;</span>, <span class="st">&quot;economy&quot;</span>), <span class="at">window =</span> 6L, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="co"># create document-feature matrix</span></span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>mkws_dfm <span class="ot">&lt;-</span> <span class="fu">dfm</span>(mkws_toks)</span>
-<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a><span class="co"># create document-embedding matrix using a la carte</span></span>
-<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>mkws_dem <span class="ot">&lt;-</span> <span class="fu">dem</span>(<span class="at">x =</span> mkws_dfm, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">transform =</span> <span class="cn">TRUE</span>, <span class="at">transform_matrix =</span> cr_transform, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a><span class="co"># get embeddings for each pattern</span></span>
-<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>mkws_wvs <span class="ot">&lt;-</span> <span class="fu">dem_group</span>(mkws_dem, <span class="at">groups =</span> mkws_dem<span class="sc">@</span>docvars<span class="sc">$</span>pattern)</span>
-<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a><span class="co"># find nearest neighbors for each keyword</span></span>
-<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>mkws_nns <span class="ot">&lt;-</span> <span class="fu">nns</span>(mkws_wvs, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">N =</span> <span class="dv">5</span>, <span class="at">candidates =</span> mkws_wvs<span class="sc">@</span>features, <span class="at">as_list =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a><span class="co"># to check results for a given pattern</span></span>
-<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>mkws_nns[[<span class="st">&quot;immigration reform&quot;</span>]]</span></code></pre></div>
-<pre><code>## # A tibble: 5 × 4
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" tabindex="-1"></a><span class="co"># build a corpus of contexts surrounding the target term &quot;immigration&quot;</span></span>
+<span id="cb29-2"><a href="#cb29-2" tabindex="-1"></a>mkws_toks <span class="ot">&lt;-</span> <span class="fu">tokens_context</span>(<span class="at">x =</span> toks_nostop_feats, <span class="at">pattern =</span> <span class="fu">c</span>(<span class="st">&quot;immigration&quot;</span>, <span class="st">&quot;welfare&quot;</span>, <span class="st">&quot;immigration reform&quot;</span>, <span class="st">&quot;economy&quot;</span>), <span class="at">window =</span> <span class="dv">6</span><span class="dt">L</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb29-3"><a href="#cb29-3" tabindex="-1"></a></span>
+<span id="cb29-4"><a href="#cb29-4" tabindex="-1"></a><span class="co"># create document-feature matrix</span></span>
+<span id="cb29-5"><a href="#cb29-5" tabindex="-1"></a>mkws_dfm <span class="ot">&lt;-</span> <span class="fu">dfm</span>(mkws_toks)</span>
+<span id="cb29-6"><a href="#cb29-6" tabindex="-1"></a></span>
+<span id="cb29-7"><a href="#cb29-7" tabindex="-1"></a><span class="co"># create document-embedding matrix using a la carte</span></span>
+<span id="cb29-8"><a href="#cb29-8" tabindex="-1"></a>mkws_dem <span class="ot">&lt;-</span> <span class="fu">dem</span>(<span class="at">x =</span> mkws_dfm, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">transform =</span> <span class="cn">TRUE</span>, <span class="at">transform_matrix =</span> cr_transform, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb29-9"><a href="#cb29-9" tabindex="-1"></a></span>
+<span id="cb29-10"><a href="#cb29-10" tabindex="-1"></a><span class="co"># get embeddings for each pattern</span></span>
+<span id="cb29-11"><a href="#cb29-11" tabindex="-1"></a>mkws_wvs <span class="ot">&lt;-</span> <span class="fu">dem_group</span>(mkws_dem, <span class="at">groups =</span> mkws_dem<span class="sc">@</span>docvars<span class="sc">$</span>pattern)</span>
+<span id="cb29-12"><a href="#cb29-12" tabindex="-1"></a></span>
+<span id="cb29-13"><a href="#cb29-13" tabindex="-1"></a><span class="co"># find nearest neighbors for each keyword</span></span>
+<span id="cb29-14"><a href="#cb29-14" tabindex="-1"></a>mkws_nns <span class="ot">&lt;-</span> <span class="fu">nns</span>(mkws_wvs, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">N =</span> <span class="dv">3</span>, <span class="at">candidates =</span> mkws_wvs<span class="sc">@</span>features, <span class="at">as_list =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb29-15"><a href="#cb29-15" tabindex="-1"></a></span>
+<span id="cb29-16"><a href="#cb29-16" tabindex="-1"></a><span class="co"># to check results for a given pattern</span></span>
+<span id="cb29-17"><a href="#cb29-17" tabindex="-1"></a>mkws_nns[[<span class="st">&quot;immigration reform&quot;</span>]]</span></code></pre></div>
+<pre><code>## # A tibble: 3 × 4
 ##   target             feature        rank value
 ##   &lt;chr&gt;              &lt;chr&gt;         &lt;int&gt; &lt;dbl&gt;
 ## 1 immigration reform comprehensive     1 0.817
 ## 2 immigration reform immigration       2 0.739
-## 3 immigration reform reform            3 0.635
-## 4 immigration reform pass              4 0.609
-## 5 immigration reform bipartisan        5 0.581</code></pre>
+## 3 immigration reform reform            3 0.635</code></pre>
 <p>This can also be useful if we wanted to explore <em>group
 differences</em> in the semantics of a given <em>topic</em> where we
 define a <em>topic</em> by a vector of <em>topical</em> target words.
@@ -977,20 +961,20 @@ the example below, the contexts around each of “immigration”,
 “immigrant” and “immigration reform” are treated as a single collection
 of contexts for the purposes of computing each party’s <em>topical</em>
 embedding.</p>
-<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># build a corpus of contexts sorrounding the immigration related words</span></span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>topical_toks <span class="ot">&lt;-</span> <span class="fu">tokens_context</span>(<span class="at">x =</span> toks_nostop_feats, <span class="at">pattern =</span> <span class="fu">c</span>(<span class="st">&quot;immigration&quot;</span>, <span class="st">&quot;immigrant&quot;</span>, <span class="st">&quot;immigration reform&quot;</span>), <span class="at">window =</span> 6L, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="co"># create document-feature matrix</span></span>
-<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>topical_dfm <span class="ot">&lt;-</span> <span class="fu">dfm</span>(topical_toks)</span>
-<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a><span class="co"># create document-embedding matrix using a la carte</span></span>
-<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>topical_dem <span class="ot">&lt;-</span> <span class="fu">dem</span>(<span class="at">x =</span> topical_dfm, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">transform =</span> <span class="cn">TRUE</span>, <span class="at">transform_matrix =</span> cr_transform, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a><span class="co"># get &quot;topical&quot; embeddings for each party</span></span>
-<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>topical_wvs <span class="ot">&lt;-</span> <span class="fu">dem_group</span>(topical_dem, <span class="at">groups =</span> topical_dem<span class="sc">@</span>docvars<span class="sc">$</span>party)</span>
-<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a><span class="co"># find nearest neighbors for each keyword</span></span>
-<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a><span class="fu">nns</span>(topical_wvs, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">N =</span> <span class="dv">5</span>, <span class="at">candidates =</span> topical_wvs<span class="sc">@</span>features, <span class="at">stem =</span> <span class="cn">TRUE</span>, <span class="at">as_list =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" tabindex="-1"></a><span class="co"># build a corpus of contexts surrounding the immigration related words</span></span>
+<span id="cb31-2"><a href="#cb31-2" tabindex="-1"></a>topical_toks <span class="ot">&lt;-</span> <span class="fu">tokens_context</span>(<span class="at">x =</span> toks_nostop_feats, <span class="at">pattern =</span> <span class="fu">c</span>(<span class="st">&quot;immigration&quot;</span>, <span class="st">&quot;immigrant&quot;</span>, <span class="st">&quot;immigration reform&quot;</span>), <span class="at">window =</span> <span class="dv">6</span><span class="dt">L</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb31-3"><a href="#cb31-3" tabindex="-1"></a></span>
+<span id="cb31-4"><a href="#cb31-4" tabindex="-1"></a><span class="co"># create document-feature matrix</span></span>
+<span id="cb31-5"><a href="#cb31-5" tabindex="-1"></a>topical_dfm <span class="ot">&lt;-</span> <span class="fu">dfm</span>(topical_toks)</span>
+<span id="cb31-6"><a href="#cb31-6" tabindex="-1"></a></span>
+<span id="cb31-7"><a href="#cb31-7" tabindex="-1"></a><span class="co"># create document-embedding matrix using a la carte</span></span>
+<span id="cb31-8"><a href="#cb31-8" tabindex="-1"></a>topical_dem <span class="ot">&lt;-</span> <span class="fu">dem</span>(<span class="at">x =</span> topical_dfm, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">transform =</span> <span class="cn">TRUE</span>, <span class="at">transform_matrix =</span> cr_transform, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb31-9"><a href="#cb31-9" tabindex="-1"></a></span>
+<span id="cb31-10"><a href="#cb31-10" tabindex="-1"></a><span class="co"># get &quot;topical&quot; embeddings for each party</span></span>
+<span id="cb31-11"><a href="#cb31-11" tabindex="-1"></a>topical_wvs <span class="ot">&lt;-</span> <span class="fu">dem_group</span>(topical_dem, <span class="at">groups =</span> topical_dem<span class="sc">@</span>docvars<span class="sc">$</span>party)</span>
+<span id="cb31-12"><a href="#cb31-12" tabindex="-1"></a></span>
+<span id="cb31-13"><a href="#cb31-13" tabindex="-1"></a><span class="co"># find nearest neighbors for each keyword</span></span>
+<span id="cb31-14"><a href="#cb31-14" tabindex="-1"></a><span class="fu">nns</span>(topical_wvs, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">N =</span> <span class="dv">5</span>, <span class="at">candidates =</span> topical_wvs<span class="sc">@</span>features, <span class="at">stem =</span> <span class="cn">TRUE</span>, <span class="at">as_list =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
 <pre><code>## Using porter for stemming. To check available languages run &quot;SnowballC::getStemLanguages()&quot;
 
 ## # A tibble: 10 × 4
@@ -1015,8 +999,8 @@ tokenized corpus to results. Each of the four exploratory analysis
 functions –<code>nns()</code>, <code>cos_sim()</code>,
 <code>nns_ratio()</code> and <code>ncs()</code>– described above has its
 corresponding wrapper function.</p>
-<p>An key advantage of the wrapper functions is that they make it easy
-to obtain standard errors and confidence intervals around the sample
+<p>A key advantage of the wrapper functions is that they make it easy to
+obtain standard errors and confidence intervals around the sample
 statistics of interest via <em>bootstrapping</em>. Bootstrapping works
 by sampling with replacement documents from our tokenized corpus of
 contexts (within group if the argument <code>groups</code> is specified)
@@ -1044,25 +1028,25 @@ distribution of cosine similarities obtained via bootstrapping–,
 confidence interval. Note, values may differ slightly to the
 step-by-step process outlined above as they represent averages over
 bootstrapped samples.</p>
-<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># we limit candidates to features in our corpus</span></span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>feats <span class="ot">&lt;-</span> <span class="fu">featnames</span>(<span class="fu">dfm</span>(immig_toks))</span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="co"># compare nearest neighbors between groups</span></span>
-<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(2021L)</span>
-<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>immig_party_nns <span class="ot">&lt;-</span> <span class="fu">get_nns</span>(<span class="at">x =</span> immig_toks, <span class="at">N =</span> <span class="dv">10</span>,</span>
-<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">groups =</span> <span class="fu">docvars</span>(immig_toks, <span class="st">&#39;party&#39;</span>),</span>
-<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">candidates =</span> feats,</span>
-<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">pre_trained =</span> cr_glove_subset,</span>
-<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">transform =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">transform_matrix =</span> cr_transform,</span>
-<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>        <span class="at">bootstrap =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">num_bootstraps =</span> <span class="dv">100</span>, </span>
-<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>        <span class="at">confidence_level =</span> <span class="fl">0.95</span>,</span>
-<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">as_list =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" tabindex="-1"></a><span class="co"># we limit candidates to features in our corpus</span></span>
+<span id="cb33-2"><a href="#cb33-2" tabindex="-1"></a>feats <span class="ot">&lt;-</span> <span class="fu">featnames</span>(<span class="fu">dfm</span>(immig_toks))</span>
+<span id="cb33-3"><a href="#cb33-3" tabindex="-1"></a></span>
+<span id="cb33-4"><a href="#cb33-4" tabindex="-1"></a><span class="co"># compare nearest neighbors between groups</span></span>
+<span id="cb33-5"><a href="#cb33-5" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2021</span><span class="dt">L</span>)</span>
+<span id="cb33-6"><a href="#cb33-6" tabindex="-1"></a>immig_party_nns <span class="ot">&lt;-</span> <span class="fu">get_nns</span>(<span class="at">x =</span> immig_toks, <span class="at">N =</span> <span class="dv">10</span>,</span>
+<span id="cb33-7"><a href="#cb33-7" tabindex="-1"></a>        <span class="at">groups =</span> <span class="fu">docvars</span>(immig_toks, <span class="st">&#39;party&#39;</span>),</span>
+<span id="cb33-8"><a href="#cb33-8" tabindex="-1"></a>        <span class="at">candidates =</span> feats,</span>
+<span id="cb33-9"><a href="#cb33-9" tabindex="-1"></a>        <span class="at">pre_trained =</span> cr_glove_subset,</span>
+<span id="cb33-10"><a href="#cb33-10" tabindex="-1"></a>        <span class="at">transform =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb33-11"><a href="#cb33-11" tabindex="-1"></a>        <span class="at">transform_matrix =</span> cr_transform,</span>
+<span id="cb33-12"><a href="#cb33-12" tabindex="-1"></a>        <span class="at">bootstrap =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb33-13"><a href="#cb33-13" tabindex="-1"></a>        <span class="at">num_bootstraps =</span> <span class="dv">100</span>, </span>
+<span id="cb33-14"><a href="#cb33-14" tabindex="-1"></a>        <span class="at">confidence_level =</span> <span class="fl">0.95</span>,</span>
+<span id="cb33-15"><a href="#cb33-15" tabindex="-1"></a>        <span class="at">as_list =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <pre><code>## starting bootstraps 
 ## done with bootstraps</code></pre>
-<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># nearest neighbors of &quot;immigration&quot; for Republican party</span></span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>immig_party_nns[[<span class="st">&quot;R&quot;</span>]]</span></code></pre></div>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" tabindex="-1"></a><span class="co"># nearest neighbors of &quot;immigration&quot; for Republican party</span></span>
+<span id="cb35-2"><a href="#cb35-2" tabindex="-1"></a>immig_party_nns[[<span class="st">&quot;R&quot;</span>]]</span></code></pre></div>
 <pre><code>## # A tibble: 10 × 7
 ##    target feature      rank value std.error lower.ci upper.ci
 ##    &lt;chr&gt;  &lt;chr&gt;       &lt;int&gt; &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;
@@ -1084,17 +1068,17 @@ features of interest –as with <code>get_nns()</code>, the
 <code>groups</code> argument can take on more than two groups. Again we
 set <code>bootstrap = TRUE</code> to obtain standard errors for the
 cosine similarities.</p>
-<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># compute the cosine similarity between each group&#39;s embedding and a specific set of features</span></span>
-<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(2021L)</span>
-<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a><span class="fu">get_cos_sim</span>(<span class="at">x =</span> immig_toks,</span>
-<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>            <span class="at">groups =</span> <span class="fu">docvars</span>(immig_toks, <span class="st">&#39;party&#39;</span>),</span>
-<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">features =</span> <span class="fu">c</span>(<span class="st">&quot;reform&quot;</span>, <span class="st">&quot;enforce&quot;</span>),</span>
-<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">pre_trained =</span> cr_glove_subset,</span>
-<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">transform =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">transform_matrix =</span> cr_transform,</span>
-<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>            <span class="at">bootstrap =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a>            <span class="at">num_bootstraps =</span> <span class="dv">100</span>,</span>
-<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>            <span class="at">as_list =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" tabindex="-1"></a><span class="co"># compute the cosine similarity between each group&#39;s embedding and a specific set of features</span></span>
+<span id="cb37-2"><a href="#cb37-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2021</span><span class="dt">L</span>)</span>
+<span id="cb37-3"><a href="#cb37-3" tabindex="-1"></a><span class="fu">get_cos_sim</span>(<span class="at">x =</span> immig_toks,</span>
+<span id="cb37-4"><a href="#cb37-4" tabindex="-1"></a>            <span class="at">groups =</span> <span class="fu">docvars</span>(immig_toks, <span class="st">&#39;party&#39;</span>),</span>
+<span id="cb37-5"><a href="#cb37-5" tabindex="-1"></a>            <span class="at">features =</span> <span class="fu">c</span>(<span class="st">&quot;reform&quot;</span>, <span class="st">&quot;enforce&quot;</span>),</span>
+<span id="cb37-6"><a href="#cb37-6" tabindex="-1"></a>            <span class="at">pre_trained =</span> cr_glove_subset,</span>
+<span id="cb37-7"><a href="#cb37-7" tabindex="-1"></a>            <span class="at">transform =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb37-8"><a href="#cb37-8" tabindex="-1"></a>            <span class="at">transform_matrix =</span> cr_transform,</span>
+<span id="cb37-9"><a href="#cb37-9" tabindex="-1"></a>            <span class="at">bootstrap =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb37-10"><a href="#cb37-10" tabindex="-1"></a>            <span class="at">num_bootstraps =</span> <span class="dv">100</span>,</span>
+<span id="cb37-11"><a href="#cb37-11" tabindex="-1"></a>            <span class="at">as_list =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
 <pre><code>## starting bootstraps 
 ## done with bootstraps
 
@@ -1132,29 +1116,29 @@ the standard errors around the cosine similarity ratios, the
 corresponding (empirical) <code>p.value</code> and a <code>group</code>
 variable identifying which group the nearest neighbor belonged to –
 <code>shared</code> means it appeared in both groups’ top <span class="math inline">\(N\)</span> nearest neighbors.</p>
-<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="co"># we limit candidates to features in our corpus</span></span>
-<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>feats <span class="ot">&lt;-</span> <span class="fu">featnames</span>(<span class="fu">dfm</span>(immig_toks))</span>
-<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a><span class="co"># compute ratio</span></span>
-<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(2021L)</span>
-<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>immig_nns_ratio <span class="ot">&lt;-</span> <span class="fu">get_nns_ratio</span>(<span class="at">x =</span> immig_toks, </span>
-<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>              <span class="at">N =</span> <span class="dv">10</span>,</span>
-<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>              <span class="at">groups =</span> <span class="fu">docvars</span>(immig_toks, <span class="st">&#39;party&#39;</span>),</span>
-<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>              <span class="at">numerator =</span> <span class="st">&quot;R&quot;</span>,</span>
-<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>              <span class="at">candidates =</span> feats,</span>
-<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>              <span class="at">pre_trained =</span> cr_glove_subset,</span>
-<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a>              <span class="at">transform =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a>              <span class="at">transform_matrix =</span> cr_transform,</span>
-<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a>              <span class="at">bootstrap =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a>              <span class="at">num_bootstraps =</span> <span class="dv">100</span>,</span>
-<span id="cb41-16"><a href="#cb41-16" aria-hidden="true" tabindex="-1"></a>              <span class="at">permute =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb41-17"><a href="#cb41-17" aria-hidden="true" tabindex="-1"></a>              <span class="at">num_permutations =</span> <span class="dv">100</span>,</span>
-<span id="cb41-18"><a href="#cb41-18" aria-hidden="true" tabindex="-1"></a>              <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" tabindex="-1"></a><span class="co"># we limit candidates to features in our corpus</span></span>
+<span id="cb39-2"><a href="#cb39-2" tabindex="-1"></a>feats <span class="ot">&lt;-</span> <span class="fu">featnames</span>(<span class="fu">dfm</span>(immig_toks))</span>
+<span id="cb39-3"><a href="#cb39-3" tabindex="-1"></a></span>
+<span id="cb39-4"><a href="#cb39-4" tabindex="-1"></a><span class="co"># compute ratio</span></span>
+<span id="cb39-5"><a href="#cb39-5" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2021</span><span class="dt">L</span>)</span>
+<span id="cb39-6"><a href="#cb39-6" tabindex="-1"></a>immig_nns_ratio <span class="ot">&lt;-</span> <span class="fu">get_nns_ratio</span>(<span class="at">x =</span> immig_toks, </span>
+<span id="cb39-7"><a href="#cb39-7" tabindex="-1"></a>              <span class="at">N =</span> <span class="dv">10</span>,</span>
+<span id="cb39-8"><a href="#cb39-8" tabindex="-1"></a>              <span class="at">groups =</span> <span class="fu">docvars</span>(immig_toks, <span class="st">&#39;party&#39;</span>),</span>
+<span id="cb39-9"><a href="#cb39-9" tabindex="-1"></a>              <span class="at">numerator =</span> <span class="st">&quot;R&quot;</span>,</span>
+<span id="cb39-10"><a href="#cb39-10" tabindex="-1"></a>              <span class="at">candidates =</span> feats,</span>
+<span id="cb39-11"><a href="#cb39-11" tabindex="-1"></a>              <span class="at">pre_trained =</span> cr_glove_subset,</span>
+<span id="cb39-12"><a href="#cb39-12" tabindex="-1"></a>              <span class="at">transform =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb39-13"><a href="#cb39-13" tabindex="-1"></a>              <span class="at">transform_matrix =</span> cr_transform,</span>
+<span id="cb39-14"><a href="#cb39-14" tabindex="-1"></a>              <span class="at">bootstrap =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb39-15"><a href="#cb39-15" tabindex="-1"></a>              <span class="at">num_bootstraps =</span> <span class="dv">100</span>,</span>
+<span id="cb39-16"><a href="#cb39-16" tabindex="-1"></a>              <span class="at">permute =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb39-17"><a href="#cb39-17" tabindex="-1"></a>              <span class="at">num_permutations =</span> <span class="dv">100</span>,</span>
+<span id="cb39-18"><a href="#cb39-18" tabindex="-1"></a>              <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
 <pre><code>## starting bootstraps 
 ## done with bootstraps 
 ## starting permutations 
 ## done with permutations</code></pre>
-<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(immig_nns_ratio)</span></code></pre></div>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" tabindex="-1"></a><span class="fu">head</span>(immig_nns_ratio)</span></code></pre></div>
 <pre><code>## # A tibble: 6 × 7
 ##   feature   value std.error lower.ci upper.ci p.value group 
 ##   &lt;chr&gt;     &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt; 
@@ -1171,42 +1155,40 @@ the desired significance threshold to denote “significant” results on
 the plot (indicated by a <span class="math inline">\(*\)</span> next to
 the feature). Also, you can choose between two different visualizations
 of the same results using the <code>horizontal</code> argument.</p>
-<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_nns_ratio</span>(<span class="at">x =</span> immig_nns_ratio, <span class="at">alpha =</span> <span class="fl">0.01</span>, <span class="at">horizontal =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
-<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAqAAAAHgCAYAAAB6jN80AAAEDmlDQ1BrQ0dDb2xvclNwYWNlR2VuZXJpY1JHQgAAOI2NVV1oHFUUPpu5syskzoPUpqaSDv41lLRsUtGE2uj+ZbNt3CyTbLRBkMns3Z1pJjPj/KRpKT4UQRDBqOCT4P9bwSchaqvtiy2itFCiBIMo+ND6R6HSFwnruTOzu5O4a73L3PnmnO9+595z7t4LkLgsW5beJQIsGq4t5dPis8fmxMQ6dMF90A190C0rjpUqlSYBG+PCv9rt7yDG3tf2t/f/Z+uuUEcBiN2F2Kw4yiLiZQD+FcWyXYAEQfvICddi+AnEO2ycIOISw7UAVxieD/Cyz5mRMohfRSwoqoz+xNuIB+cj9loEB3Pw2448NaitKSLLRck2q5pOI9O9g/t/tkXda8Tbg0+PszB9FN8DuPaXKnKW4YcQn1Xk3HSIry5ps8UQ/2W5aQnxIwBdu7yFcgrxPsRjVXu8HOh0qao30cArp9SZZxDfg3h1wTzKxu5E/LUxX5wKdX5SnAzmDx4A4OIqLbB69yMesE1pKojLjVdoNsfyiPi45hZmAn3uLWdpOtfQOaVmikEs7ovj8hFWpz7EV6mel0L9Xy23FMYlPYZenAx0yDB1/PX6dledmQjikjkXCxqMJS9WtfFCyH9XtSekEF+2dH+P4tzITduTygGfv58a5VCTH5PtXD7EFZiNyUDBhHnsFTBgE0SQIA9pfFtgo6cKGuhooeilaKH41eDs38Ip+f4At1Rq/sjr6NEwQqb/I/DQqsLvaFUjvAx+eWirddAJZnAj1DFJL0mSg/gcIpPkMBkhoyCSJ8lTZIxk0TpKDjXHliJzZPO50dR5ASNSnzeLvIvod0HG/mdkmOC0z8VKnzcQ2M/Yz2vKldduXjp9bleLu0ZWn7vWc+l0JGcaai10yNrUnXLP/8Jf59ewX+c3Wgz+B34Df+vbVrc16zTMVgp9um9bxEfzPU5kPqUtVWxhs6OiWTVW+gIfywB9uXi7CGcGW/zk98k/kmvJ95IfJn/j3uQ+4c5zn3Kfcd+AyF3gLnJfcl9xH3OfR2rUee80a+6vo7EK5mmXUdyfQlrYLTwoZIU9wsPCZEtP6BWGhAlhL3p2N6sTjRdduwbHsG9kq32sgBepc+xurLPW4T9URpYGJ3ym4+8zA05u44QjST8ZIoVtu3qE7fWmdn5LPdqvgcZz8Ww8BWJ8X3w0PhQ/wnCDGd+LvlHs8dRy6bLLDuKMaZ20tZrqisPJ5ONiCq8yKhYM5cCgKOu66Lsc0aYOtZdo5QCwezI4wm9J/v0X23mlZXOfBjj8Jzv3WrY5D+CsA9D7aMs2gGfjve8ArD6mePZSeCfEYt8CONWDw8FXTxrPqx/r9Vt4biXeANh8vV7/+/16ffMD1N8AuKD/A/8leAvFY9bLAAAAOGVYSWZNTQAqAAAACAABh2kABAAAAAEAAAAaAAAAAAACoAIABAAAAAEAAAKgoAMABAAAAAEAAAHgAAAAABJf29wAAEAASURBVHgB7J0JvFTz+8cfSyiUUIhUKLIrCZVKITtJkS2yU3YSqVQU/ookSskWskXIWtmiFLJHhSyRJJItzP+8v35zzdw7c2dud+bMOWc+z+s1NXPmzDnf7/t77sxznnW1mCcmEQEREAEREAEREAEREAGfCKzu03l0GhEQAREQAREQAREQARFwBKSA6kIQAREQAREQAREQARHwlYAUUF9x62QiIAIiIAIiIAIiIAJSQHUNiIAIiIAIiIAIiIAI+EpACqivuHUyERABERABERABERABKaC6BkRABERABERABERABHwlIAXUV9w6mQiIgAiIgAiIgAiIgBRQXQMiIAIiIAIiIAIiIAK+EpAC6itunUwEREAEREAEREAEREAKqK4BERABERABERABERABXwlIAfUVt04mAiIgAiIgAiIgAiIgBVTXgAiIgAiIgAiIgAiIgK8EpID6ilsnEwEREAEREAEREAERkAKqa0AEREAEREAEREAERMBXAlJAfcWtk4mACIiACIiACIiACEgB1TUgAiIgAiIgAiIgAiLgKwEpoL7i1slEQAREQAREQAREQASkgOoaEAEREAEREAEREAER8JWAFFBfcetkIiACIiACIiACIiACUkB1DYiACIiACIiACIiACPhKQAqor7h1MhEQAREQAREQAREQASmgugZEQAREQAREQAREQAR8JSAF1FfcOpkIiIAIiIAIiIAIiIAUUF0DIiACIiACIiACIiACvhKQAuorbp1MBERABERABERABERACqiuAREQAREQAREQAREQAV8JSAH1FbdOJgIiIAIiIAIiIAIiIAVU14AIiIAIiIAIiIAIiICvBKSA+opbJxMBERABERABERABEZACqmtABERABERABERABETAVwJSQH3FrZOJgAiIgAiIgAiIgAhIAdU1IAIiIAIiIAIiIAIi4CsBKaC+4tbJREAEREAEREAEREAEpIDqGhABERABERABERABEfCVgBRQX3HrZCIgAiIgAiIgAiIgAlJAdQ2IgAiIgAiIgAiIgAj4SkAKqK+4dTIREAEREAEREAEREAEpoLoGREAEREAEREAEREAEfCUgBdRX3DqZCIiACIiACIiACIiAFFBdAyIgAiIgAiIgAiIgAr4SkALqK26dTAREQAREQAREQAREQAqorgEREAEREAEREAEREAFfCUgB9RW3TiYCIiACIiACIiACIiAFVNeACIiACIiACIiACIiArwSkgPqKWycTAREQAREQAREQARGQAqprQAREQAREQAREQAREwFcCUkB9xa2TiYAIiIAIiIAIiIAISAHVNSACIiACIiACIiACIuArASmgvuLWyURABFIRmDZtWqrN2iYCIiACIhBRAmtGdF6algiIQBYEVq5caQ8++GDSnquvvrptuOGGtvHGG9uuu+5qa66Z36+JqVOn2tVXX20NGza0zTffPGksfrz49ttv7YUXXrC9997bttpqKz9OWalzzJgxwz799FM79thjbY011qjUsfz88Ntvv20ffPBBmVMyh/XXX9+23XZbdw2U2UEbREAEIklgtZgnkZyZJiUCESKwdOlSQzHcYIMNcjqrn376qdxjNmjQwHr37m2nnnpqTs8bP9gff/xhxx13nH333XfWokULGzx4cPwt3/5H+dxvv/3srrvushNPPNG3867qic444wwbNWqU/fbbb7bOOuus6mHc57gB+fXXXzMeAwWR668y0qtXLxsyZEi5h+jcubNbh8rOq9yT6E0REIFAEMivaSMQU9QgRCC8BO644w6nlM2fP99NYrvttrMrr7zSKW25nBXWv6FDh7pD/vPPP7ZixQp7//33rW/fvnbaaac5K2i3bt1yeUp3rAceeMApn7x47bXXbNasWbb77rvn/Dw6YGoC8+bNs8cffzz1mwlbUXpr1qyZsGXVnz7yyCPWrFmzkgOgABOCcf/999uECROsWrVqduedd5a8ryciIALRJCAFNJrrqllFgMCFF15YohTGp/Pxxx/b8ccf71yw/fr1i2+u9P9YVvfYY4+k47Rr18723Xdf69Chg513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QEOyUBqmCIiACIiACIiACESFgBTQqKyk5iECESDw+++/R2AWmoIIiIAIiEAmAlJAMxHS+yIgAjkjMGfOHGvVqlXK4w0aNMiOOOKIlO9powiIgAiIQLQIrBmt6Wg2IiACQSQwdOhQ++yzz2zx4sX24YcfWs+ePZOG+ddff9nkyZNtr732StquFyIgAiIgAtEkIAU0muuqWYlAoAhst912NnHiRPvll18MNzuW0ERZffXVrWnTptavX7/EzXouAiIgAiIQUQKrxTyJ6Nw0LREQgYAR+PTTT23IkCF2xx13BGxkGo4IiIAIiICfBKSA+klb5xIBEbB//vnHpkyZYl999ZWtXLkyichWW21l7dq1S9qmFyIgAiIgAtEjIBd89NZUMxKBwBL4+++/bf/993cKaJUqVaxatWpJYyUJSQpoEhK9EAEREIFIEpACGsll1aREIJgEZs6cadOmTbNnn33W2rdvb8R+SkRABERABIqPgBTQ4ltzzbgICfz444/24osv2k8//eRc4IkIUAQbNGiQuClvz7/77jvbeuutnRU0byfRgUVABERABAJPQApo4JdIAxSByhEg8adZs2ZO+cTljes7UcaNG+ebArrHHnvYF1984R716tVLHIaei4AIiIAIFBEBKaBFtNiaanESGDlypG2xxRb2/vvvu/8LSWGDDTaws88+2w4++GDr3r271alTJ8kNzzhVC7SQK6Rzi4AIiIA/BJQF7w9nnUUECkaga9euRnb5wIEDCzaG+Ilnz55tu+++e/xlmf+PPvpomzBhQpnt2iACIiACIhAtAlJAo7Wemo0IlCEwYsQIu+eee+yNN94o8542iIAIiIAIiEAhCEgBLQR1nVMEfCSwcOFCO+yww4xuRPvuu6/VrFkz6ey4vHF9S0RABERABETALwJSQP0irfOIQIEI9OrVy3UfSnd6XN64vv2U5557zu69916bP3++Pf300zZ+/Hjr3LmzbbTRRn4OI9DnInnsgQcesD59+hhVDDp16mTvvvuuHXPMMXbzzTfbaqutFujxa3AiIAIiUB4BFeErj47eE4EIEBg8eLDRcTfdw2/ls2/fvtahQwdbsGCBTZ8+3ShO/+ijj1rjxo1t7ty5ESBe+Sn89ttvjhEKKHLFFVfYnDlz7JxzzrGJEyfaTTfdVPmT6AgiIAIiUEACUkALCF+nFoFiI0AJJpKhUDinTp1aMv0nn3zSmjdvrgSk/xF5++23benSpcb/3DjA66yzzrJ+/frZRRddZFiQJSIgAiIQZgJSQMO8ehq7CGRJ4JdffnGu3NatW9vOO+9sxx13nFGeCeXGT3nrrbdcRv7hhx+edNq1117bjUmK1b9YvvzyS9t2221trbXWMphRwP/AAw90b9aqVcuwkEpEQAREIMwEpICGefU0dhHIggDKCgXgccUTN9imTRt77733XD3O008/3VcllBjPRYsW2fLly8uM/KWXXrIaNWqU2V6MG7bZZhvncidG9o477jCUTizEP//8s919992ujWkxctGcRUAEokNAheijs5aaiQikJHDrrbc6pe/rr7+22rVrl+xDWSYy4Hv06OGsoiVv5PEJNUBRpk488US75JJL3JkY15gxY1ypqGHDhuXx7OE5dNOmTe2ggw4yFFEEJXSNNdawdu3aOdf88OHDwzMZjVQEREAEUhBQFnwKKNokAlEiQCF6Og7dcMMNZaZFWaaOHTvaueeeW+a9fG2YNWuWMSayvBGssjyIcUSxUnb3v+T/+ecfg9WGG25YoohOmTLFWrZsaby3zjrr/Luj/hUBERCBEBKQBTSEi6Yhi0BFCKy//vr28ccfl/nIX3/95cogVa1atcx7+dyAFZS2oK+99prNmzfPqlevbk2aNLGGDRvm87ShOjYZ79wUvPLKK0nj5oZh0KBBbvszzzyT9J5eiIAIiECYCEgBDdNqaawisAoEjjjiCNd7/cYbbzSSf2jL+c4779jYsWPt+++/d27dVTjsKn8ElzulhFBAKcGEkOWN7LnnnnbBBRe458X4z9ChQ+2zzz6zxYsX24cffmg9e/ZMwsBNw+TJk13oRNIbeiECIiACISMgBTRkC6bhikBFCZA9Te3NSy+91JXwwSJKEhCWR2IL69evX9FDrvL+KJzEN2J1JRtfbuRklHSrQjmnasHvv//uEpES91h99dUdP8oxSURABEQgzAQUAxrm1dPYRaACBHB3z5w507755hvbcsstjZJMm2yySQWOUPldX3jhBTv22GONeqDVqlWr/AEjegTiY4cMGeJuECI6RU1LBESgyAlIAS3yC0DTjyYBWjZ+9NFH1qVLF9e+kefpZO+997a6deumezun2ymsvt9++xlueGp/StITINGIpKOvvvrKVq5cmbQjYRRkxEtEQAREIKwEpICGdeU0bhEoh0Dv3r2dBY2YQZ5fd911afd+8MEHXZ/xtDvk8A0K39PLnMxuapDusssuSUePZ8QnbSzCF4Qq7L///k4BrVKlShlrMXG948aNK0IymrIIiEBUCEgBjcpKah4isAoEsLKhpNJxxy+hj/n555+f8nT0pZ8wYULK94pp4+uvv+7KLZFw1L59eyP2UyICIiACUSKgJKQorabmIgIpCAwYMMAl+8QLvyfuQvkjCtF37949cXPenhPbiPJ50kknOcWqdAmoLbbYIm/nDtOBab259dZbOytomMatsYqACIhAtgSkgGZLSvuJQIgI/Pjjj0amNC7v6dOnuy469BdPFDKtP/jgA6M9pl/C+VAy77zzThWcLwc6rVNJ1OJRr169cvbUWyIgAiIQTgJSQMO5bhq1CJRLoGbNms7qSbtNakriwqW4eaIQW4j1k5aPfkmzZs0M5finn36yDTbYwK/Thu48sDn77LNd/Vas03SySnTDo8TTRlUiAiIgAmEloBjQsK6cxi0CWRKg1icxnvRfL7T89ttvrgc85Zhww1MOKjH+VIrVvys0e/Zso2NUOlGsbDoy2i4CIhAWAlJAw7JSGqcIRICAFKsILKKmIAIiIAI5ICAFNAcQdQgRCDqBb7/91l599VX79ddfXVwo2e/Ully4cKFLdNlnn32CPgWNTwREQAREIEIEFAMaocXUVEQgFYGPP/7YyHbH/U0cIbU24z3YKWh+6KGHpvqYthWYADcIhCr88MMPbr1IKGPdli1b5kZ20UUXFXiEOr0IiIAIrDoBKaCrzk6fFIFQEBgzZoyhaE6aNMlGjRrlYi579uxpI0eOdAoOGdd+y3PPPWf33nuvzZ8/355++mkbP368de7c2deMfL/nXJHzYaHGKk0SGTcNKJ8I/6+33np21VVXVeRw2lcEREAEAkdA1Y0DtyQakAjklsBnn31mRx11lDVo0MCaNm1qr732mlP0rrzySleE/sUXX8ztCTMcrW/fvtahQwdbsGCBKxGFVe/RRx+1xo0b29y5czN8ujjeJlYW5RPlfObMmbbddtu58Innn3/eVQ/o1KlTcYAoglkuXbpU130RrLOmWJaAFNCyTLRFBCJFYJNNNnHudyaFIjNjxowSF/z2229fpjxTPidPXcuBAwc6hXPq1Kklp3ryySetefPm6oL0PyLcNKCQH3jgga5dKZbiFStWuOL9F198sV177bUl7PQk3ATwTGDR/vDDD+3WW28N92Q0ehGoAAEpoBWApV1FIIwEWrRo4dzdTz31lDVq1MhNAZc3CUjEGO60006+Teutt95y4QCHH3540jnXXnttO+644wzXvMSsdu3aJTcNa665pmNGe06Em4Z3331XmCJAgBsvwipeeukl56XwsylEBPBpCiEnIAU05Auo4YtAJgJdu3a1/fbbz3B9U3OzV69eriYoHXaINWzbtm2mQ+TsfX5gFy1aZMuXLy9zTH6Ea9SoUWZ7MW7YeeedXfJR//797ffff3ehE3fddZdLQLr//vttxx13LEYskZszlm4snyQI0jwifoMYuYlqQiKQgoDKMKWAok0iECUCdB6i5/off/xRouCh7C1ZssQOO+wwoyOSX0IZqB122MG5lelN37JlS2fNe+aZZwxla9iwYXbqqaf6NZxAnwcrNd2QZs2aZT///LO1bt3aaJ+KtZjY0H333TfQ49fgsiOAFZTkwHPPPdd5JK677rrsPqi9RCDkBKSAhnwBNXwRyETgiiuusMmTJxvu7yAIChVW2U8//dQNh7JQPM466ywbPny4esT/b5GwFK+//vru5mGNNdZwSVuvvPKKiwvFRS+JBgHKpH3//ffWqlWraExIsxCBLAlIAc0SlHYTgbASwIqG8klWdVCEH1wU0a+++sr1rN9www1d3/OgjK/Q43jnnXec2/2jjz6SW7bQi+HT+VnzOnXquPhfn06p04hAQQkoBrSg+HVyEcg/gR49eriYy44dO9qIESNcBvpjjz1m8cfXX3+d/0EknOGee+5xbnise6eddprtueeeLhSAJCRczBJzsZ7E566zzjrCUSQEHnnkEdtiiy2MBD3+NmlEIBGBKBOQBTTKq6u5iYBH4LLLLrPy4somTJhgRx99tC+s/vzzT9t4441twIABLr4xHn+K9eekk06yCy64wLp16+bLWIJ8EmJlzznnHGe1hkf9+vVdAll8zJtvvrkVooFA/Pz6P/cEuOGYNm2a3X333YYyys0HoSr8XdDJTCICUSMgBTRqK6r5iEApApR54cctncTbc6Z7P5fbKaR+/vnn2wcffFDmsHRseuihh4yEpGIXCtHvvvvuaTFww8CNgySaBLgBoTkDa0yptG222cbdmJ144onuBi6as9asio2AWnEW24prvkVHgPqR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UF8w6yQiIAIiIAIikExAMaDJPCryihJVuNyzEbqIrbmmiv5kw8rPfaSA+klb5xIBERABERCB/xFQDOiqXwpywa86u6B8UgpoUFZC4xABERABESgqAvEKFUGsVhH0hZALPugrlHl8UkAzM9IeIiACIiACIpBzAkGvVpHzCefwgHLB5xBmgQ4lBbRA4HVaERABERABERABEShWAorKLdaV17xFQAREQAREIKQEVDc3pAuXMGxZQBNg6KkIiIAIiIAIiEDwCahubvDXKNMIpYBmIqT3RUAEREAEREAEREAEckpg9ZweTQcTAREQAREQAREQAREQgQwEpIBmAKS3RUAEREAEREAEREAEcktACmhueepoIiACIiACIiACIiACGQhIAc0ASG+LQFQIfPPNN/boo48GZjq33nqrUctPkp7Ar7/+amPHjk2/g96JHIFXXnnF5syZE7l5+TWhkSNH2j///OPX6XSeShCQAloJePqoCISJwC233GKjRo0yypcUWqZOnWr333+/PfPMM4UeSqDPf/fdd9u4ceNs3rx5gR6nBpcbAvQ25+/0pptukhK1CkhfffVVGz9+vD355JOr8Gl9xG8CBasD+scff9gbb7zhfgwbNWpk22+/vd9zTzrf4sWLbdasWW7b7rvvbrVr1056Pygv3nvvPZs/f75ttNFG1rx5c1trrbWCMrScj+Pzzz83WtVVrVrV9txzT1t//fVzfo6KHnDhwoXOOrH22ms7/jVq1KjoIQqyP23rsKwgo0ePtksvvbQg4+Ck/O1j/URuv/12a926tVWrVs29LsQ/X3zxhWFpLE/WXXdd23LLLcvbJefvYbGeMGGCsxKjkAwfPjzn56jIAT/++OOMFuuNN97YatWqVZHD5nXfv/76yz799NOM59hss81sgw02yLhfvnd46KGHjHVHnnrqKTv00EPzfcoKHf/bb7/NeAO75pprWsOGDSt03FzsvHLlSqe8cyy+4/bdd19bb731cnHoVT7G77//bp999lnGz9etW7fgY804yDzsUBAF9M4777RLLrnEfvjhh5IpoUzdddddtu2225Zs8+PJb7/9Zueff76NGTPG/v77b3fKNdZYw0499VQbOnSoU378GEemc7z//vvWrVs3mz17dsmufNEzxuOOO65kWxSefP/999a9e3ebNGlSyXRQQi+//HK78sorbbXVVivZ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e+21lyugS8/WRGG7aoEmEinO58rML85116xFQAREQARyT6BoFVDiPrPtZUtXHnW5yf3FV94RqS/3yy+/pN3l2GOPTftevt7YddddDdcSGfqbbrppmdPQUUsiAiIgAiIgAiKQmUDRKqCZ0WiPQhJo1KhRkgseKzVud8p80Dv3o48+8nV4ZOZXrVrVFVhWL3hf0etkIiACIiACESSwegTntEpT+uOPP2zo0KHWsWNHO/vss11wNbGhKB4S/wl88sknrq8wvYV5sD5z5861fffd10499VTfB0TnpT322MMWLFjg+7l1QhEQAREQARGIGgFZQL0VRbkhzpN6oNtss41tuOGGrgd848aNndLx4osvRm3dQzsfKhbQgYOe7H5nWk6cONFOPvlkpwBTfLl69epJHBWmkYRDL0RABERABEQgLQGVYfLQjBgxwhYuXOh6wBN7OHbsWJd09O6771qTJk1cshIKh6TwBOg5/Ouvv9qiRYtsyy239HVAFKJH8b3hhhtSnrcQmfkpB6KNIiACIiACIhBwAlJAvQV688037bTTTitj0WrQoIFz+T733HOu3VjA1zJSw8PqjKIZF0Ihfv75Z7v99ttts802s7p168bf8u1/ud99Q60TiYAIiIAIRJyAFFBvgelwQ3xhaSH2cPr06a6wbun39Dq/BLghKF0HlDhMLNH333+/URjeD3nqqaesZs2aRuIRz8vLzO/SpYsfQ9I5REAEREAERCD0BBQD6i3htGnT7IADDnCtxNZdd12naFx77bU2fPhwe/zxx+3DDz9UHVCfL/U///zTZb0nnhb3u1+KZ/y8ZONTfolSXMQHl1aK4/vxP5n6EhEQAREQAREQgcwEpID+j9HNN9/sesLj9kXJIZ5vo402stGjR9uRRx6ZmaT2yDkB1uC7774rqbk5e/ZsF5PrtxKa84npgCIgAiIgAiJQ5ASkgHoXwI8//uhqPNLXdubMmS4ZiQQX3K4bbLBBkV8ihZk+VudTTjnFmjdvbjfddJMbBJZIhJuCZs2auef6RwREQAREQAREIHwEpIB6a3bFFVfY5MmT7a233grfCkZ0xCeccIItX77cRo4c6ZKOmOYPP/xgvXv3tq+++sqFSUR06pqWCIiACIiACESegJKQvCXGAkp8oSQYBHC9k/Dz6quvliifjIyQCGJzN998c1u6dKmr1xqMEWsUIiACIiACIiACFSEgBdSj1aNHD+vUqZPrgtSuXTun9CTGGdIBB6VH4g8B2NeoUcOVx9p+++2TTkqzgN9//9215Ex6Qy9EQAREQAREQARCQ0AKqLdU48aNc5nuxB0+9thjZRaPDGh1uSmDJa8bDj74YBs4cKBttdVWLt6THvCsD8Xg27Zt6xTUvA5ABxcBERABERABEcgbAcWAemhx+ZbX8536k4kW0bythg5cQoAyTN26dXM1P9nIGrBGe+65pz344IO+d0EqGZieiIAIiIAIiIAIVJqAFNBKI9QB8kngm2++sbffftt1QWrYsKE1bdpUNwP5BK5ji4AIiIAIiIAPBOSC/x9k4gqpBUoZJpSenXbayfbff3876qijfFgGnSIVgY8++sglHb3//vuuTNZuu+1mK1assNatW6faXdtEQAREQAREQARCQmD1kIwzr8NcsmSJtWrVypVjWrx4se2+++72/fffW9euXe2CCy7I67l18NQEaIG6yy672KRJk1z7TboQPfTQQ+6m4Iknnkj9IW0VAREQAREQAREIBQG54L1lGjFihF1//fU2Z86cpOQW6oKijOICRhmS+EeAWM+6deu6GNA11/zXUE+s7qWXXuqU0o8//ti/wehMIiACIiACIiACOSUgC6iHE2vbWWedlaR8QrlJkya233772dSpU3MKXQcrnwA91VH6L7nkEosrn3yCRLCLL77Y5s2b51p0ln8UvSsCIiACIiACIhBUAlJAvZXZcccd7dFHHy2zRnTimTVrlm277bZl3tOG/BGg5FK1atUslZUT5RMFtWrVqvkbgI4sAiIgAiIgAiKQVwJywXt4KW5OwhHF5qk/ieXzjTfesMcff9y1gxw0aFBJ5nXcNZzXVdHB7eSTT7bXXnvNrrnmGmeFplMVluirr77a1l57bXvppZdESQREQAREQAREIKQEpIB6C9erVy8bMmRIVks4fvx4O/bYY7PaVzutOgESw4455hh78cUXnRseVzyVCrBWT5w40bbeeutVP7g+KQIiIAIiIAIiUFACUkALil8nL48ASUf0g6cD0h9//GGNGjWy9u3bJ8WFlvd5vScCIiACIiACIhBMAlJA/7cub775pmvDOX/+/DIrRSkmXO8SERABERABERABERCByhNQIXqPIbGF++67r1Myt9hiC9f2sfJodYSKEnjqqafsl19+yepjXbp0yWo/7SQCIiACIiACIhA8ArKAemtyxhlnOBfvuHHjgrdCRTQiqg0sWLCgZMZ//fWXe77++uu7/6lKgGy22WauW5V7oX9EQAREQAREQARCR0BlmLwl22ijjWT1DMClO3fuXFu5cqV7DB8+3Lbffnt77733XB/4pUuX2ssvv+wy4jt16hSA0WoIIiACIiACIiACq0pAFlCP3MKFC+2AAw5wbTcPPfRQ22STTZJ4rr669PQkID68IBQCJfTII49MOhtK6k477WQ//PCDxS2jSTvohQiIgAiIgAiIQOAJSLPylqhmzZpWv35954qvU6eOUQg98UEPcol/BP755x/79ddfbZ111ilzUkoxkR0fd8+X2UEbREAEREAEREAEAk9ASUjeEmFpmzFjhvXt29fVmaTlY6IoAz6RRv6fY3Hu0KGDXX755dagQQPbbrvtnEI6bdo0oylAq1at3E1D/keiM4iACIiACIiACOSDgFzwHtXjjjvOateubUOHDs0HYx1zFQgQ80kh+ueff97WW289FxdKLdC99trLFaJnvSQiIAIiIAIiIALhJCALqLduzZs3dx13wrmE0Rz1hhtuaM8884zNmTPHPXC5N23a1MV/0hVJIgIiIAIiIAIiEF4CsoB6a/fFF1+4HvANGza0tm3b2qabblrS+52lxepGUozEXwJ0QHr77bftt99+c3GfiWc/7bTTEl/quQiIgAiIgAiIQIgISAH1FitTL/gJEybY0UcfHaJlDf9QR4wYYeeee667ESDbvXRc7rJly8I/Sc1ABERABERABIqUgBTQIl34oE8bi3PHjh3tuuuuS5kNH/Txa3wiIAIiIAIiIALpCUgBTc9G7xSIAGWYqlWr5ioT7LLLLgUahU4rAiIgAiIgAiKQLwKqA/o/svQg79Onj7Vu3dp23nlnlxk/cuTIMrGH+VoIHfc/ApRhovTViy+++N9GPRMBERABERABEYgMAaUTe0tJkssee+xhn376qbVo0cLatGlj1JwcP368vfXWWzZq1KgyMYiRuQICOpGLLrrITj31VFuyZIk1bty4jBteMbkBXTgNSwREQAREQASyICAXvAfp//7v/2zgwIFGm8fE+pJvvPGGy4CnFBBWUYl/BLbaaiv77LPP0p6QbkgSERABERABERCBcBKQC95bt9mzZ1v37t2TlE+WEzcwZZlefvnlcK5uiEe9YMECF/6AopnqEeKpaegiIAIiIAIiUPQE5IL3LgHK/Hz88cdlLgaKn8+fP9+qVq1a5j1tyC+BSZMmGXG56eTYY49N95a2i4AIiIAIiIAIBJyAXPDeAk2ePNkVor/hhhvs8MMPN9y/77zzjo0dO9bGjBljFESvX79+wJcyWsNr1KhRkgv+77//dpbQNdZYw2gY8NFHH0VrwpqNCIiACIiACBQRASmg/1vs/v3724ABAwxFB4vo8uXLrXr16kYmfNeuXYvokgjmVFeuXOkUUorTH3DAAUaSkkQEREAEREAERCCcBKSAJqzb9OnT7fPPP7dvvvnGqlSpYgcddJCztiXsoqcFJsD67LDDDkYnJNZIIgIiIAIiIAIiED4CSkLy1uyPP/6wM88807p06eKsnRdffLGtWLHCmjdvbrfcckv4VjXCI15rrbXs119/tUWLFkV4lpqaCIiACIiACESbgCyg3vo+8cQTru/4fffdZ61atXIrjiv+4Ycf/v/2zgJciur944efgS2oWKBiYxd2IIqKDXYHKnYnFvioGBhYKHZgdz62Yit2i/koKGKg2Dn/93v0jLOzs3vv3Ll37+W/n/M8l9k9c/Izs+x33/Oed1y/fv3cmDFjXMeOHf9/3wltbHYKQi+hGZKejjRx4kQ3fPhwpx3yY8eOJTZrgMMRAhCAAAQgMIkRQIDaBevfv7/r3LmzGzhwYNnl6927t1PQc4VpItWOQFYcUD0hqVu3bm7YsGH+iVW1Gw09QQACEIAABCDQnAQIw2Q0O3To4EaNGlXGVVbQ0aNHl+WT0fIEFBYrHWxey+/t2rVr+c7pAQIQgAAEIACBFiWAD6jh1WYjhWLS8u6ECRO88Bk3bpwbMGCAGz9+vOvVq1eLXgQaLycgsdm+ffuSP8RnOSdyIAABCEAAApMiAZbg/71qI0aM8P6eCvejpV75HHbq1Mk/B75Pnz6T4rVlzBCAAAQgAAEIQKBNEkCAJi6Lnryj575rk0uXLl1c9+7dfUzQRBFeQgACEIAABCAAAQgUJIAALQiQ6hCAAAQgAAEIQAAC+QjgA5qPF6UhAAEIQAACEIAABAoSQIAWBEh1CEAAAhCAAAQgAIF8BBCg+XhRGgIQgAAEIAABCECgIAEEaEGAVIcABCAAAQhAAAIQyEcAAZqPF6UhAAEIQAACEIAABAoSQIAWBEh1CEAAAhCAAAQgAIF8BBCg+XhRGgIQgAAEIAABCECgIAEEaEGAVIcABCAAAQhAAAIQyEcAAZqPF6UhAAEIQAACEIAABAoSQIAWBEh1CEAAAhCAAAQgAIF8BBCg+XhRGgIQgAAEIAABCECgIAEEaEGAVIcABCAAAQhAAAIQyEcAAZqPF6UhAAEIQAACEIAABAoSQIAWBEh1CEAAAhCAAAQgAIF8BBCg+XhRGgIQgAAEIAABCECgIAEEaEGAVIcABCAAAQhAAAIQyEcAAZqPF6UhAAEIQAACEIAABAoSQIAWBEh1CEAAAhCAAAQgAIF8BBCg+XhRGgIQgAAEIAABCECgIAEEaEGAVIcABCAAAQhAAAIQyEcAAZqPF6UhAAEIQAACEIAABAoSQIAWBEh1CEAAAhCAAAQgAIF8BBCg+XhRGgIQgAAEIAABCECgIAEEaEGAVIcABCAAAQhAAAIQyEcAAZqPF6UhAAEIQAACEIAABAoSQIAWBEh1CEAAAhCAAAQgAIF8BBCg+XhRGgIQgAAEIAABCECgIAEEaEGAVIcABCAAAQhAAAIQyEcAAZqPF6UhAAEIQAACEIAABAoSQIAWBEh1CEAAAhCAAAQgAIF8BBCg+XhRGgIQgAAEIAABCECgIAEEaEGAVIcABCAAAQhAAAIQyEcAAZqPF6UhAAEIQAACEIAABAoSQIAWBEh1CEAAAhCAAAQgAIF8BBCg+XhRGgIQgAAEIAABCECgIAEEaEGAVIcABCAAAQhAAAIQyEcAAZqPF6UhAAEIQAACEIAABAoSQIAWBEh1CEAAAhCAAAQgAIF8BBCg+XhRGgIQgAAEIAABCECgIAEEaEGAVIcABCAAAQhAAAIQyEcAAZqPF6UhAAEIQAACEIAABAoSQIAWBEh1CEAAAhCAAAQgAIF8BBCg+XhRGgIQgAAEIAABCECgIAEEaEGAVIcABCAAAQhAAAIQyEcAAZqPF6UhAAEIQAACEIAABAoSQIAWBEh1CEAAAhCAAAQgAIF8BBCg+XhRGgIQgAAEIAABCECgIAEEaEGAVIcABCAAAQhAAAIQyEcAAZqPF6UhAAEIQAACEIAABAoSQIAWBEh1CEAAAhCAAAQgAIF8BBCg+XhRGgIQgAAEIAABCECgIAEEaEGAVIcABCAAAQhAAAIQyEcAAZqPF6UhAAEIQAACEIAABAoSQIAWBEh1CEAAAhCAAAQgAIF8BBCg+XhRGgIQgAAEIAABCECgIIHJC9anOgQgUJDAH3/84R5//HE344wzuhVWWKFga7Wp3pJjfvfdd91nn33mlllmGTfLLLP4Cb355pvuiy++cMsvv7zr0KFDs06yJefSrANtZGO1ms+4cePc0KFD3UEHHeRmn312P7pnn33W/fjjj5kjnWqqqfy1W3jhhd2UU06ZWUaZX3/9tTvjjDPctttu65Zaain39NNPu59//rmk/P/+9z+n9mabbTY333zzOb3PSvfcc4/7+OOP3f777591mjwIQKA1CUQkCECgVQmMHz8+sv8DIhNXrTqOPJ235Jj32Wcfz+Pee++Nh7Tjjjv6vCeeeCLOa64Xleby6KOPRkOGDGmublqknYkTJ0YHH3xwNHbs2Lj9SvOJCzTTi759+0Y9evQoaW2JJZbw10n3c6U/E47R4MGDS+ol31xzzTW+7gcffOCzF1xwwYptqQ+dv/zyyyMT3slm/Ov33nsvmmKKKaI777yz7BwZEIBA6xLAAmr/g5Eg0JoEJptsMjfXXHN5a05rjiNP3y055o4dO3oesnDVImXN5bnnnnNrrbWW69evXy2G0OQ+ttpqK3f//fc7E6FxG1nziU8204tbbrnF3X777W7UqFGZLR555JFu7rnnLjlnYtm99dZb7sYbb3RHH320+/LLL70FtaSQvdF8FlhgATf//POXnNp9991ji/hff/3lLa2jR492I0eO9Nfp7rvvdrfddltJnYUWWsj179/f7b333s7Esl9lKCnAGwhAoPUItK7+pXcIQAACDRNoSQtoVu/mEuGtbiZAs063mbw111zTj/PTTz+t2ZhkaTRxGa2//vplfQYL6EsvvVR2LmTceuutfsyyhP7yyy8h2x///vvvqFOnTtG+++4b5wcLqInXOC/54rXXXvPjsW/R6Morr0ye8q/HjBkTTT755NGAAQPKzpEBAQi0HoFsx5nW08P0DIFWJSCrzMMPP+xs6c7Zl2HFsdgyp7e8vPjii86+RCuW04mvvvrKPfXUU/7v22+/LStrH3/33XfflfjOqU3l6ZzShAkT3GOPPeY+/PDDOK+soX8z5IP3zDPPeOtUQ2Or1EZTxhzmEfqUlcqEiLd6hXmE/sThkUcecbJgpVOY+59//pk+lfle/dhyrXvooYfc66+/XuYvqErpsb399tvu/fff9+2F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" /><!-- --></p>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" tabindex="-1"></a><span class="fu">plot_nns_ratio</span>(<span class="at">x =</span> immig_nns_ratio, <span class="at">alpha =</span> <span class="fl">0.01</span>, <span class="at">horizontal =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <h3 id="nearest-contexts-1">Nearest contexts</h3>
 <p><code>conText::get_ncs()</code> is a wrapper function for
 <code>ncs()</code>, used to compute cosine similarities between ALC
 (group) embeddings and the ALC embeddings of individual contexts with
 the option to bootstrap standard errors.</p>
-<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="co"># compare nearest neighbors between groups</span></span>
-<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(2021L)</span>
-<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>immig_party_ncs <span class="ot">&lt;-</span> <span class="fu">get_ncs</span>(<span class="at">x =</span> immig_toks,</span>
-<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>                            <span class="at">N =</span> <span class="dv">10</span>,</span>
-<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>                            <span class="at">groups =</span> <span class="fu">docvars</span>(immig_toks, <span class="st">&#39;party&#39;</span>),</span>
-<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>                            <span class="at">pre_trained =</span> cr_glove_subset,</span>
-<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>                            <span class="at">transform =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>                            <span class="at">transform_matrix =</span> cr_transform,</span>
-<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a>                            <span class="at">bootstrap =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb46-10"><a href="#cb46-10" aria-hidden="true" tabindex="-1"></a>                            <span class="at">num_bootstraps =</span> <span class="dv">100</span>,</span>
-<span id="cb46-11"><a href="#cb46-11" aria-hidden="true" tabindex="-1"></a>                            <span class="at">as_list =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" tabindex="-1"></a><span class="co"># compare nearest neighbors between groups</span></span>
+<span id="cb44-2"><a href="#cb44-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2021</span><span class="dt">L</span>)</span>
+<span id="cb44-3"><a href="#cb44-3" tabindex="-1"></a>immig_party_ncs <span class="ot">&lt;-</span> <span class="fu">get_ncs</span>(<span class="at">x =</span> immig_toks,</span>
+<span id="cb44-4"><a href="#cb44-4" tabindex="-1"></a>                            <span class="at">N =</span> <span class="dv">10</span>,</span>
+<span id="cb44-5"><a href="#cb44-5" tabindex="-1"></a>                            <span class="at">groups =</span> <span class="fu">docvars</span>(immig_toks, <span class="st">&#39;party&#39;</span>),</span>
+<span id="cb44-6"><a href="#cb44-6" tabindex="-1"></a>                            <span class="at">pre_trained =</span> cr_glove_subset,</span>
+<span id="cb44-7"><a href="#cb44-7" tabindex="-1"></a>                            <span class="at">transform =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb44-8"><a href="#cb44-8" tabindex="-1"></a>                            <span class="at">transform_matrix =</span> cr_transform,</span>
+<span id="cb44-9"><a href="#cb44-9" tabindex="-1"></a>                            <span class="at">bootstrap =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb44-10"><a href="#cb44-10" tabindex="-1"></a>                            <span class="at">num_bootstraps =</span> <span class="dv">100</span>,</span>
+<span id="cb44-11"><a href="#cb44-11" tabindex="-1"></a>                            <span class="at">as_list =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <pre><code>## starting bootstraps 
 ## done with bootstraps</code></pre>
-<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="co"># nearest neighbors of &quot;immigration&quot; for Republican party</span></span>
-<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>immig_party_ncs[[<span class="st">&quot;R&quot;</span>]]</span></code></pre></div>
+<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" tabindex="-1"></a><span class="co"># nearest neighbors of &quot;immigration&quot; for Republican party</span></span>
+<span id="cb46-2"><a href="#cb46-2" tabindex="-1"></a>immig_party_ncs[[<span class="st">&quot;R&quot;</span>]]</span></code></pre></div>
 <pre><code>## # A tibble: 10 × 7
-##    target context                             rank value std.e…¹ lower…² upper…³
-##    &lt;chr&gt;  &lt;chr&gt;                              &lt;int&gt; &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
-##  1 R      america suggest immigration can g…     1 0.812 0.00956   0.796   0.828
-##  2 R      immigration can good thing immigr…     2 0.781 0.0101    0.765   0.799
-##  3 R      immigration law prior illegal imm…     3 0.780 0.0119    0.760   0.797
-##  4 R      good thing immigration illegal im…     4 0.768 0.00887   0.754   0.782
-##  5 R      going cost hardworking taxpayers …     5 0.754 0.0101    0.737   0.770
-##  6 R      actually increase illegal immigra…     6 0.731 0.00739   0.720   0.743
-##  7 R      immigration enforcement along sou…     7 0.729 0.0108    0.711   0.746
-##  8 R      responsible immigration policies …     8 0.721 0.0116    0.703   0.740
-##  9 R      late right thing hold president r…     9 0.721 0.0131    0.695   0.743
-## 10 R      backlog met likely lead reduction…    10 0.715 0.00989   0.696   0.730
-## # … with abbreviated variable names ¹​std.error, ²​lower.ci, ³​upper.ci</code></pre>
+##    target context                         rank value std.error lower.ci upper.ci
+##    &lt;chr&gt;  &lt;chr&gt;                          &lt;int&gt; &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;
+##  1 R      america suggest immigration c…     1 0.812   0.00956    0.796    0.828
+##  2 R      immigration can good thing im…     2 0.781   0.0101     0.765    0.799
+##  3 R      immigration law prior illegal…     3 0.780   0.0119     0.760    0.797
+##  4 R      good thing immigration illega…     4 0.768   0.00887    0.754    0.782
+##  5 R      going cost hardworking taxpay…     5 0.754   0.0101     0.737    0.770
+##  6 R      actually increase illegal imm…     6 0.731   0.00739    0.720    0.743
+##  7 R      immigration enforcement along…     7 0.729   0.0108     0.711    0.746
+##  8 R      responsible immigration polic…     8 0.721   0.0116     0.703    0.740
+##  9 R      late right thing hold preside…     9 0.721   0.0131     0.695    0.743
+## 10 R      backlog met likely lead reduc…    10 0.715   0.00989    0.696    0.730</code></pre>
 <h1 id="embedding-regression">Embedding regression</h1>
 <p>The above framework allows us to explore semantic differences over
 one grouping variable at a time. However, we often want to look at
@@ -1221,82 +1203,153 @@ do just that. The corresponding package function is
 must be a quanteda tokens object with covariates stored as document
 variables (<code>docvars</code>). We next specify a formula consisting
 of the target word of interest, e.g. “immigration” and the set of
-covariates. To use all covariates in <code>data</code>, we can speficy
+covariates. To use all covariates in <code>data</code>, we can specify
 <code>immigration ~ .</code>. <code>formula</code> can also take vectors
 of target words
 e.g. <code>c(&quot;immigration&quot;, &quot;immigrants&quot;) ~ party + gender</code> and
 phrases e.g. <code>&quot;immigration reform&quot; ~ party + gender</code> – place
 phrases in quotation marks.</p>
-<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="co"># two factor covariates</span></span>
-<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(2021L)</span>
-<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>model1 <span class="ot">&lt;-</span> <span class="fu">conText</span>(<span class="at">formula =</span> immigration <span class="sc">~</span> party <span class="sc">+</span> gender,</span>
-<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">data =</span> toks_nostop_feats,</span>
-<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">pre_trained =</span> cr_glove_subset,</span>
-<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>                  <span class="at">transform =</span> <span class="cn">TRUE</span>, <span class="at">transform_matrix =</span> cr_transform,</span>
-<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">bootstrap =</span> <span class="cn">TRUE</span>, <span class="at">num_bootstraps =</span> <span class="dv">100</span>,</span>
-<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>                  <span class="at">permute =</span> <span class="cn">TRUE</span>, <span class="at">num_permutations =</span> <span class="dv">100</span>,</span>
-<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>                  <span class="at">window =</span> <span class="dv">6</span>, <span class="at">case_insensitive =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a>                  <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
-<pre><code>##   coefficient normed.estimate std.error lower.ci upper.ci p.value
-## 1     party_R        3.386745 0.2279633 2.996087 3.734473       0
-## 2    gender_M        2.956320 0.2333038 2.604478 3.323050       0</code></pre>
-<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="co"># notice, non-binary covariates are automatically &quot;dummified&quot;</span></span>
-<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(model1)</span></code></pre></div>
-<pre><code>## [1] &quot;party_R&quot;     &quot;gender_M&quot;    &quot;(Intercept)&quot;</code></pre>
+<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" tabindex="-1"></a><span class="co"># two factor covariates</span></span>
+<span id="cb48-2"><a href="#cb48-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2021</span><span class="dt">L</span>)</span>
+<span id="cb48-3"><a href="#cb48-3" tabindex="-1"></a>model1 <span class="ot">&lt;-</span> <span class="fu">conText</span>(<span class="at">formula =</span> immigration <span class="sc">~</span> party <span class="sc">+</span> gender,</span>
+<span id="cb48-4"><a href="#cb48-4" tabindex="-1"></a>                  <span class="at">data =</span> toks_nostop_feats,</span>
+<span id="cb48-5"><a href="#cb48-5" tabindex="-1"></a>                  <span class="at">pre_trained =</span> cr_glove_subset,</span>
+<span id="cb48-6"><a href="#cb48-6" tabindex="-1"></a>                  <span class="at">transform =</span> <span class="cn">TRUE</span>, <span class="at">transform_matrix =</span> cr_transform,</span>
+<span id="cb48-7"><a href="#cb48-7" tabindex="-1"></a>                  <span class="at">jackknife =</span> <span class="cn">FALSE</span>, <span class="at">confidence_level =</span> <span class="fl">0.95</span>,</span>
+<span id="cb48-8"><a href="#cb48-8" tabindex="-1"></a>                  <span class="at">cluster_variable =</span> <span class="cn">NULL</span>,</span>
+<span id="cb48-9"><a href="#cb48-9" tabindex="-1"></a>                  <span class="at">permute =</span> <span class="cn">TRUE</span>, <span class="at">num_permutations =</span> <span class="dv">100</span>,</span>
+<span id="cb48-10"><a href="#cb48-10" tabindex="-1"></a>                  <span class="at">window =</span> <span class="dv">6</span>, <span class="at">case_insensitive =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb48-11"><a href="#cb48-11" tabindex="-1"></a>                  <span class="at">verbose =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<pre><code>## 924 instances of &quot;immigration&quot; found.
+## total observations included in regression: 924 
+## starting permutations 
+## done with permutations 
+##   coefficient normed.estimate.orig normed.estimate.deflated
+## 1     party_R            10.139940                 8.668252
+## 2    gender_M             6.908761                 5.154713
+##   normed.estimate.beta.error.null   n n_obs covariate_mean p.value
+## 1                        1.471687 924   924      0.4740260       0
+## 2                        1.754048 924   924      0.6709957       0</code></pre>
+<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" tabindex="-1"></a><span class="co"># notice, non-binary covariates are automatically &quot;dummified&quot;</span></span>
+<span id="cb50-2"><a href="#cb50-2" tabindex="-1"></a><span class="fu">rownames</span>(model1)</span></code></pre></div>
+<pre><code>## [1] &quot;(Intercept)&quot; &quot;party_R&quot;     &quot;gender_M&quot;</code></pre>
 <p><code>conText()</code> outputs a <code>conText-class</code> object
 which is simply a <code>dgCMatrix class</code> matrix corresponding to
-the beta coefficients (ALC embeddings) with additional attributes
-including: a table (automatically printed) with the normed coefficients
-(excluding the intercept), their std. errors and p-values,
-<code>@normed_coefficients</code>, and the set of features used when
-creating the embeddings <code>@features</code>.</p>
+the beta coefficients (ALC embeddings). These coefficients will be
+D-dimensional, where D equals the dimensionality of the pre-trained
+embeddings used. To summarize the magnitude of these coefficients we
+employ the squared Euclidean norm. In small and/or unbalanced samples,
+this measure is upwardly biased. To address this issue, we implement a
+bias correction as detailed in <a href="https://github.com/prodriguezsosa/conText/blob/master/updates/bias_in_distance_measures.md">Statistical
+Bias in Distance Measures</a>.</p>
+<p>The <code>conText-class</code> contains two important attributes:</p>
+<ul>
+<li><code>@normed_coefficients</code>: a table with
+<ul>
+<li>the uncorrected squared norm of the coefficients (excluding the
+intercept)</li>
+<li>the debiased squared norm of the coefficients</li>
+<li>the estimate of the bias term in the the original squared norm</li>
+<li>if <code>jackknife = TRUE</code>, the std. error (of the squared
+normed coefficients) and lower and upper bound of the confidence
+interval (where bounds are determined based on the
+<code>confidence_level</code>; default is 0.95)</li>
+<li>if <code>permute = TRUE</code>, the empirical p-value</li>
+</ul></li>
+<li><code>@features</code>: the set of features used when creating the
+embeddings.</li>
+</ul>
+<p>To speed up the jackknife computation, iterations can be run in
+parallel by setting <code>parallel=TRUE</code>. For this functionality
+to work, users must register a parallel backend prior to calling
+<code>conText()</code>. For example, using the <code>doParallel</code>
+package:</p>
+<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" tabindex="-1"></a><span class="fu">require</span>(doParallel)</span>
+<span id="cb52-2"><a href="#cb52-2" tabindex="-1"></a><span class="fu">registerDoParallel</span>(<span class="dv">4</span>)</span>
+<span id="cb52-3"><a href="#cb52-3" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2021</span><span class="dt">L</span>)</span>
+<span id="cb52-4"><a href="#cb52-4" tabindex="-1"></a>model1 <span class="ot">&lt;-</span> <span class="fu">conText</span>(<span class="at">formula =</span> immigration <span class="sc">~</span> party <span class="sc">+</span> gender,</span>
+<span id="cb52-5"><a href="#cb52-5" tabindex="-1"></a>                  <span class="at">data =</span> toks_nostop_feats,</span>
+<span id="cb52-6"><a href="#cb52-6" tabindex="-1"></a>                  <span class="at">pre_trained =</span> cr_glove_subset,</span>
+<span id="cb52-7"><a href="#cb52-7" tabindex="-1"></a>                  <span class="at">transform =</span> <span class="cn">TRUE</span>, <span class="at">transform_matrix =</span> cr_transform,</span>
+<span id="cb52-8"><a href="#cb52-8" tabindex="-1"></a>                  <span class="at">jackknife =</span> <span class="cn">TRUE</span>, <span class="at">confidence_level =</span> <span class="fl">0.95</span>,</span>
+<span id="cb52-9"><a href="#cb52-9" tabindex="-1"></a>                  <span class="at">parallel =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb52-10"><a href="#cb52-10" tabindex="-1"></a>                  <span class="at">cluster_variable =</span> <span class="cn">NULL</span>,</span>
+<span id="cb52-11"><a href="#cb52-11" tabindex="-1"></a>                  <span class="at">permute =</span> <span class="cn">TRUE</span>, <span class="at">num_permutations =</span> <span class="dv">100</span>,</span>
+<span id="cb52-12"><a href="#cb52-12" tabindex="-1"></a>                  <span class="at">window =</span> <span class="dv">6</span>, <span class="at">case_insensitive =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb52-13"><a href="#cb52-13" tabindex="-1"></a>                  <span class="at">verbose =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<p>Additionally, users can set <code>jackknife_fraction</code> to a
+value between 0 and 1 to perform the jackknife on a random subsample of
+the data, where the subsample size =
+<code>jackknife_fraction * n</code>. While we recommend that all final
+estimates are computed using the full sample, this option can be useful
+for exploratory analysis.</p>
+<h3 id="bias-correction-in-earlier-versions-of-package">Bias correction
+in earlier versions of package</h3>
+<p>In earlier versions of the package, the
+<code>@normed_coefficients</code> table returned the norm (i.e. square
+root of the squared norm) of the coefficients. Bias in these estimates
+was mitigated by using the jackknife to estimate and subtract the bias
+term from the norm. However, some bias remained in small samples and
+highly imbalanced groups. As shown in <a href="https://www.cambridge.org/core/journals/political-analysis/article/measuring-distances-in-high-dimensional-spaces/88126F4A48F121387D249C1856C3665B">Green
+et al. (2025)</a>, our new bias correction method is robust to these
+issues.</p>
+<p>Users interested in accessing previous versions of the package for
+backward compatibility or replication purposes can install an older
+version using the following <code>devtools</code> command:</p>
+<div class="sourceCode" id="cb53"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" tabindex="-1"></a><span class="fu">require</span>(devtools)</span>
+<span id="cb53-2"><a href="#cb53-2" tabindex="-1"></a><span class="fu">install_version</span>(<span class="st">&quot;conText&quot;</span>, <span class="at">version =</span> <span class="st">&quot;1.4.2&quot;</span>, <span class="at">repos =</span> <span class="st">&quot;http://cran.us.r-project.org&quot;</span>)</span></code></pre></div>
+<h2 id="from-regression-coefficients-to-alc-embeddings">From regression
+coefficients to ALC embeddings</h2>
 <p>We can combine the coefficients to compute the ALC embeddings for the
 various combinations of the covariates (see <a href="https://github.com/prodriguezsosa/EmbeddingRegression">Rodriguez,
 Spirling and Stewart (2021)</a> for details).</p>
-<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="co"># D-dimensional beta coefficients</span></span>
-<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a><span class="co"># the intercept in this case is the ALC embedding for female Democrats</span></span>
-<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a><span class="co"># beta coefficients can be combined to get each group&#39;s ALC embedding</span></span>
-<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>DF_wv <span class="ot">&lt;-</span> model1[<span class="st">&#39;(Intercept)&#39;</span>,] <span class="co"># (D)emocrat - (F)emale </span></span>
-<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a>DM_wv <span class="ot">&lt;-</span> model1[<span class="st">&#39;(Intercept)&#39;</span>,] <span class="sc">+</span> model1[<span class="st">&#39;gender_M&#39;</span>,] <span class="co"># (D)emocrat - (M)ale </span></span>
-<span id="cb54-6"><a href="#cb54-6" aria-hidden="true" tabindex="-1"></a>RF_wv <span class="ot">&lt;-</span> model1[<span class="st">&#39;(Intercept)&#39;</span>,] <span class="sc">+</span> model1[<span class="st">&#39;party_R&#39;</span>,]  <span class="co"># (R)epublican - (F)emale </span></span>
-<span id="cb54-7"><a href="#cb54-7" aria-hidden="true" tabindex="-1"></a>RM_wv <span class="ot">&lt;-</span> model1[<span class="st">&#39;(Intercept)&#39;</span>,] <span class="sc">+</span> model1[<span class="st">&#39;party_R&#39;</span>,] <span class="sc">+</span> model1[<span class="st">&#39;gender_M&#39;</span>,] <span class="co"># (R)epublican - (M)ale </span></span>
-<span id="cb54-8"><a href="#cb54-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb54-9"><a href="#cb54-9" aria-hidden="true" tabindex="-1"></a><span class="co"># nearest neighbors</span></span>
-<span id="cb54-10"><a href="#cb54-10" aria-hidden="true" tabindex="-1"></a><span class="fu">nns</span>(<span class="fu">rbind</span>(DF_wv,DM_wv), <span class="at">N =</span> <span class="dv">10</span>, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">candidates =</span> model1<span class="sc">@</span>features)</span></code></pre></div>
+<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" tabindex="-1"></a><span class="co"># D-dimensional beta coefficients</span></span>
+<span id="cb54-2"><a href="#cb54-2" tabindex="-1"></a><span class="co"># the intercept in this case is the ALC embedding for female Democrats</span></span>
+<span id="cb54-3"><a href="#cb54-3" tabindex="-1"></a><span class="co"># beta coefficients can be combined to get each group&#39;s ALC embedding</span></span>
+<span id="cb54-4"><a href="#cb54-4" tabindex="-1"></a>DF_wv <span class="ot">&lt;-</span> model1[<span class="st">&#39;(Intercept)&#39;</span>,] <span class="co"># (D)emocrat - (F)emale </span></span>
+<span id="cb54-5"><a href="#cb54-5" tabindex="-1"></a>DM_wv <span class="ot">&lt;-</span> model1[<span class="st">&#39;(Intercept)&#39;</span>,] <span class="sc">+</span> model1[<span class="st">&#39;gender_M&#39;</span>,] <span class="co"># (D)emocrat - (M)ale </span></span>
+<span id="cb54-6"><a href="#cb54-6" tabindex="-1"></a>RF_wv <span class="ot">&lt;-</span> model1[<span class="st">&#39;(Intercept)&#39;</span>,] <span class="sc">+</span> model1[<span class="st">&#39;party_R&#39;</span>,]  <span class="co"># (R)epublican - (F)emale </span></span>
+<span id="cb54-7"><a href="#cb54-7" tabindex="-1"></a>RM_wv <span class="ot">&lt;-</span> model1[<span class="st">&#39;(Intercept)&#39;</span>,] <span class="sc">+</span> model1[<span class="st">&#39;party_R&#39;</span>,] <span class="sc">+</span> model1[<span class="st">&#39;gender_M&#39;</span>,] <span class="co"># (R)epublican - (M)ale </span></span>
+<span id="cb54-8"><a href="#cb54-8" tabindex="-1"></a></span>
+<span id="cb54-9"><a href="#cb54-9" tabindex="-1"></a><span class="co"># nearest neighbors</span></span>
+<span id="cb54-10"><a href="#cb54-10" tabindex="-1"></a><span class="fu">nns</span>(<span class="fu">rbind</span>(DF_wv,DM_wv), <span class="at">N =</span> <span class="dv">10</span>, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">candidates =</span> model1<span class="sc">@</span>features)</span></code></pre></div>
 <pre><code>## $DM_wv
 ## # A tibble: 10 × 4
 ##    target feature        rank value
 ##    &lt;chr&gt;  &lt;chr&gt;         &lt;int&gt; &lt;dbl&gt;
-##  1 DM_wv  immigration       1 0.837
-##  2 DM_wv  broken            2 0.698
-##  3 DM_wv  reform            3 0.670
-##  4 DM_wv  comprehensive     4 0.659
-##  5 DM_wv  immigrants        5 0.590
-##  6 DM_wv  illegal           6 0.582
-##  7 DM_wv  enforcement       7 0.562
-##  8 DM_wv  system            8 0.550
-##  9 DM_wv  border            9 0.550
-## 10 DM_wv  fix              10 0.547
+##  1 DM_wv  immigration       1 0.839
+##  2 DM_wv  broken            2 0.695
+##  3 DM_wv  reform            3 0.668
+##  4 DM_wv  comprehensive     4 0.657
+##  5 DM_wv  immigrants        5 0.591
+##  6 DM_wv  illegal           6 0.584
+##  7 DM_wv  enforcement       7 0.560
+##  8 DM_wv  system            8 0.548
+##  9 DM_wv  border            9 0.547
+## 10 DM_wv  fix              10 0.544
 ## 
 ## $DF_wv
 ## # A tibble: 10 × 4
 ##    target feature        rank value
 ##    &lt;chr&gt;  &lt;chr&gt;         &lt;int&gt; &lt;dbl&gt;
-##  1 DF_wv  immigration       1 0.831
-##  2 DF_wv  comprehensive     2 0.637
-##  3 DF_wv  immigrants        3 0.635
-##  4 DF_wv  enforcement       4 0.627
-##  5 DF_wv  broken            5 0.623
-##  6 DF_wv  reform            6 0.608
-##  7 DF_wv  law               7 0.596
-##  8 DF_wv  illegal           8 0.589
-##  9 DF_wv  laws              9 0.569
-## 10 DF_wv  status           10 0.568</code></pre>
+##  1 DF_wv  immigration       1 0.830
+##  2 DF_wv  comprehensive     2 0.640
+##  3 DF_wv  immigrants        3 0.633
+##  4 DF_wv  enforcement       4 0.624
+##  5 DF_wv  broken            5 0.622
+##  6 DF_wv  reform            6 0.611
+##  7 DF_wv  law               7 0.593
+##  8 DF_wv  illegal           8 0.587
+##  9 DF_wv  laws              9 0.566
+## 10 DF_wv  legal            10 0.562</code></pre>
 <p>To access the normed coefficients for plotting:</p>
-<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>model1<span class="sc">@</span>normed_coefficients</span></code></pre></div>
-<pre><code>##   coefficient normed.estimate std.error lower.ci upper.ci p.value
-## 1     party_R        3.386745 0.2279633 2.996087 3.734473       0
-## 2    gender_M        2.956320 0.2333038 2.604478 3.323050       0</code></pre>
+<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" tabindex="-1"></a>model1<span class="sc">@</span>normed_coefficients</span></code></pre></div>
+<pre><code>##   coefficient normed.estimate.orig normed.estimate.deflated
+## 1     party_R            10.139940                 8.668252
+## 2    gender_M             6.908761                 5.154713
+##   normed.estimate.beta.error.null   n n_obs covariate_mean p.value
+## 1                        1.471687 924   924      0.4740260       0
+## 2                        1.754048 924   924      0.6709957       0</code></pre>
 <p><code>conText</code> can also take continuous covariates. In the
 example below we estimate a model using the first dimension of the
 NOMINATE score–understood to capture the Liberal-Conservative spectrum
@@ -1308,48 +1361,35 @@ similarity between the ALC embedding for <code>immigration</code> and
 the feature <code>enforcement</code> whereas the lower the NOMINATE
 score (more Liberal) the greater its similarity with the feature
 <code>reform</code>.</p>
-<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="co"># continuous covariate</span></span>
-<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(2021L)</span>
-<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>model2 <span class="ot">&lt;-</span> <span class="fu">conText</span>(<span class="at">formula =</span> immigration <span class="sc">~</span> nominate_dim1,</span>
-<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">data =</span> toks_nostop_feats,</span>
-<span id="cb58-5"><a href="#cb58-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">pre_trained =</span> cr_glove_subset,</span>
-<span id="cb58-6"><a href="#cb58-6" aria-hidden="true" tabindex="-1"></a>                  <span class="at">transform =</span> <span class="cn">TRUE</span>, <span class="at">transform_matrix =</span> cr_transform,</span>
-<span id="cb58-7"><a href="#cb58-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">bootstrap =</span> <span class="cn">TRUE</span>, <span class="at">num_bootstraps =</span> <span class="dv">100</span>,</span>
-<span id="cb58-8"><a href="#cb58-8" aria-hidden="true" tabindex="-1"></a>                  <span class="at">permute =</span> <span class="cn">TRUE</span>, <span class="at">num_permutations =</span> <span class="dv">100</span>,</span>
-<span id="cb58-9"><a href="#cb58-9" aria-hidden="true" tabindex="-1"></a>                  <span class="at">window =</span> <span class="dv">6</span>, <span class="at">case_insensitive =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb58-10"><a href="#cb58-10" aria-hidden="true" tabindex="-1"></a>                  <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
-<pre><code>##     coefficient normed.estimate std.error lower.ci upper.ci p.value
-## 1 nominate_dim1        3.738801 0.2343684 3.319705 4.092368       0</code></pre>
-<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="co"># look at percentiles of nominate</span></span>
-<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>percentiles <span class="ot">&lt;-</span> <span class="fu">quantile</span>(<span class="fu">docvars</span>(cr_sample_corpus)<span class="sc">$</span>nominate_dim1, <span class="at">probs =</span> <span class="fu">seq</span>(<span class="fl">0.05</span>,<span class="fl">0.95</span>,<span class="fl">0.05</span>))</span>
-<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>percentile_wvs <span class="ot">&lt;-</span> <span class="fu">lapply</span>(percentiles, <span class="cf">function</span>(i) model2[<span class="st">&quot;(Intercept)&quot;</span>,] <span class="sc">+</span> i<span class="sc">*</span>model2[<span class="st">&quot;nominate_dim1&quot;</span>,]) <span class="sc">%&gt;%</span> <span class="fu">do.call</span>(rbind,.)</span>
-<span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a>percentile_sim <span class="ot">&lt;-</span> <span class="fu">cos_sim</span>(<span class="at">x =</span> percentile_wvs, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">features =</span> <span class="fu">c</span>(<span class="st">&quot;reform&quot;</span>, <span class="st">&quot;enforce&quot;</span>), <span class="at">as_list =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb60-5"><a href="#cb60-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb60-6"><a href="#cb60-6" aria-hidden="true" tabindex="-1"></a><span class="co"># check output</span></span>
-<span id="cb60-7"><a href="#cb60-7" aria-hidden="true" tabindex="-1"></a><span class="fu">rbind</span>(<span class="fu">head</span>(percentile_sim[[<span class="st">&quot;reform&quot;</span>]], <span class="dv">5</span>),<span class="fu">tail</span>(percentile_sim[[<span class="st">&quot;reform&quot;</span>]], <span class="dv">5</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" tabindex="-1"></a><span class="co"># continuous covariate</span></span>
+<span id="cb58-2"><a href="#cb58-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2021</span><span class="dt">L</span>)</span>
+<span id="cb58-3"><a href="#cb58-3" tabindex="-1"></a>model2 <span class="ot">&lt;-</span> <span class="fu">conText</span>(<span class="at">formula =</span> immigration <span class="sc">~</span> nominate_dim1,</span>
+<span id="cb58-4"><a href="#cb58-4" tabindex="-1"></a>                  <span class="at">data =</span> toks_nostop_feats,</span>
+<span id="cb58-5"><a href="#cb58-5" tabindex="-1"></a>                  <span class="at">pre_trained =</span> cr_glove_subset,</span>
+<span id="cb58-6"><a href="#cb58-6" tabindex="-1"></a>                  <span class="at">transform =</span> <span class="cn">TRUE</span>, <span class="at">transform_matrix =</span> cr_transform,</span>
+<span id="cb58-7"><a href="#cb58-7" tabindex="-1"></a>                  <span class="at">jackknife =</span> <span class="cn">FALSE</span>, <span class="at">confidence_level =</span> <span class="fl">0.95</span>,</span>
+<span id="cb58-8"><a href="#cb58-8" tabindex="-1"></a>                  <span class="at">permute =</span> <span class="cn">TRUE</span>, <span class="at">num_permutations =</span> <span class="dv">100</span>,</span>
+<span id="cb58-9"><a href="#cb58-9" tabindex="-1"></a>                  <span class="at">window =</span> <span class="dv">6</span>, <span class="at">case_insensitive =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb58-10"><a href="#cb58-10" tabindex="-1"></a>                  <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb58-11"><a href="#cb58-11" tabindex="-1"></a></span>
+<span id="cb58-12"><a href="#cb58-12" tabindex="-1"></a><span class="co"># look at percentiles of nominate</span></span>
+<span id="cb58-13"><a href="#cb58-13" tabindex="-1"></a>percentiles <span class="ot">&lt;-</span> <span class="fu">quantile</span>(<span class="fu">docvars</span>(cr_sample_corpus)<span class="sc">$</span>nominate_dim1, <span class="at">probs =</span> <span class="fu">seq</span>(<span class="fl">0.05</span>,<span class="fl">0.95</span>,<span class="fl">0.05</span>))</span>
+<span id="cb58-14"><a href="#cb58-14" tabindex="-1"></a>percentile_wvs <span class="ot">&lt;-</span> <span class="fu">lapply</span>(percentiles, <span class="cf">function</span>(i) model2[<span class="st">&quot;(Intercept)&quot;</span>,] <span class="sc">+</span> i<span class="sc">*</span>model2[<span class="st">&quot;nominate_dim1&quot;</span>,]) <span class="sc">%&gt;%</span> <span class="fu">do.call</span>(rbind,.)</span>
+<span id="cb58-15"><a href="#cb58-15" tabindex="-1"></a>percentile_sim <span class="ot">&lt;-</span> <span class="fu">cos_sim</span>(<span class="at">x =</span> percentile_wvs, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">features =</span> <span class="fu">c</span>(<span class="st">&quot;reform&quot;</span>, <span class="st">&quot;enforce&quot;</span>), <span class="at">as_list =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb58-16"><a href="#cb58-16" tabindex="-1"></a></span>
+<span id="cb58-17"><a href="#cb58-17" tabindex="-1"></a><span class="co"># check output</span></span>
+<span id="cb58-18"><a href="#cb58-18" tabindex="-1"></a><span class="fu">rbind</span>(<span class="fu">head</span>(percentile_sim[[<span class="st">&quot;reform&quot;</span>]], <span class="dv">2</span>),<span class="fu">tail</span>(percentile_sim[[<span class="st">&quot;reform&quot;</span>]], <span class="dv">2</span>))</span></code></pre></div>
 <pre><code>##    target feature     value
-## 1      5%  reform 0.6685867
-## 2     10%  reform 0.6637985
-## 3     15%  reform 0.6596817
-## 4     20%  reform 0.6571185
-## 5     25%  reform 0.6538607
-## 15    75%  reform 0.5015567
-## 16    80%  reform 0.4873665
-## 17    85%  reform 0.4803103
-## 18    90%  reform 0.4746953
-## 19    95%  reform 0.4693446</code></pre>
-<div class="sourceCode" id="cb62"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rbind</span>(<span class="fu">head</span>(percentile_sim[[<span class="st">&quot;enforce&quot;</span>]], <span class="dv">5</span>),<span class="fu">tail</span>(percentile_sim[[<span class="st">&quot;enforce&quot;</span>]], <span class="dv">5</span>))</span></code></pre></div>
+## 1      5%  reform 0.6692875
+## 2     10%  reform 0.6644484
+## 18    90%  reform 0.4734498
+## 19    95%  reform 0.4680526</code></pre>
+<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" tabindex="-1"></a><span class="fu">rbind</span>(<span class="fu">head</span>(percentile_sim[[<span class="st">&quot;enforce&quot;</span>]], <span class="dv">2</span>),<span class="fu">tail</span>(percentile_sim[[<span class="st">&quot;enforce&quot;</span>]], <span class="dv">2</span>))</span></code></pre></div>
 <pre><code>##    target feature     value
-## 20     5% enforce 0.4588883
-## 21    10% enforce 0.4729510
-## 22    15% enforce 0.4835118
-## 23    20% enforce 0.4895358
-## 24    25% enforce 0.4966872
-## 34    75% enforce 0.6337590
-## 35    80% enforce 0.6386407
-## 36    85% enforce 0.6408066
-## 37    90% enforce 0.6424128
-## 38    95% enforce 0.6438501</code></pre>
+## 20     5% enforce 0.4565472
+## 21    10% enforce 0.4707653
+## 37    90% enforce 0.6425993
+## 38    95% enforce 0.6440665</code></pre>
 <h1 id="local-glove-and-transformation-matrix">Local GloVe and
 transformation matrix</h1>
 <p>If (a) you have a large enough corpus to train a full GloVe
@@ -1363,48 +1403,48 @@ you will then use as your pre-trained embeddings.</p>
 <p>This example is taken (with minor changes) from <a href="https://quanteda.io/articles/pkgdown/replication/text2vec.html">this
 quanteda vignette</a> on computing GloVe embeddings using
 <code>quanteda</code> and <code>text2vec</code>.</p>
-<div class="sourceCode" id="cb64"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(text2vec)</span>
-<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a><span class="co">#---------------------------------</span></span>
-<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a><span class="co"># estimate glove model</span></span>
-<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a><span class="co">#---------------------------------</span></span>
-<span id="cb64-6"><a href="#cb64-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb64-7"><a href="#cb64-7" aria-hidden="true" tabindex="-1"></a><span class="co"># construct the feature co-occurrence matrix for our toks_nostop_feats object (see above)</span></span>
-<span id="cb64-8"><a href="#cb64-8" aria-hidden="true" tabindex="-1"></a>toks_fcm <span class="ot">&lt;-</span> <span class="fu">fcm</span>(toks_nostop_feats, <span class="at">context =</span> <span class="st">&quot;window&quot;</span>, <span class="at">window =</span> <span class="dv">6</span>, <span class="at">count =</span> <span class="st">&quot;frequency&quot;</span>, <span class="at">tri =</span> <span class="cn">FALSE</span>) <span class="co"># important to set tri = FALSE</span></span>
-<span id="cb64-9"><a href="#cb64-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb64-10"><a href="#cb64-10" aria-hidden="true" tabindex="-1"></a><span class="co"># estimate glove model using text2vec</span></span>
-<span id="cb64-11"><a href="#cb64-11" aria-hidden="true" tabindex="-1"></a>glove <span class="ot">&lt;-</span> GlobalVectors<span class="sc">$</span><span class="fu">new</span>(<span class="at">rank =</span> <span class="dv">300</span>, </span>
-<span id="cb64-12"><a href="#cb64-12" aria-hidden="true" tabindex="-1"></a>                           <span class="at">x_max =</span> <span class="dv">10</span>,</span>
-<span id="cb64-13"><a href="#cb64-13" aria-hidden="true" tabindex="-1"></a>                           <span class="at">learning_rate =</span> <span class="fl">0.05</span>)</span>
-<span id="cb64-14"><a href="#cb64-14" aria-hidden="true" tabindex="-1"></a>wv_main <span class="ot">&lt;-</span> glove<span class="sc">$</span><span class="fu">fit_transform</span>(toks_fcm, <span class="at">n_iter =</span> <span class="dv">10</span>,</span>
-<span id="cb64-15"><a href="#cb64-15" aria-hidden="true" tabindex="-1"></a>                               <span class="at">convergence_tol =</span> <span class="fl">1e-3</span>, </span>
-<span id="cb64-16"><a href="#cb64-16" aria-hidden="true" tabindex="-1"></a>                               <span class="at">n_threads =</span> <span class="dv">2</span>) <span class="co"># set to &#39;parallel::detectCores()&#39; to use all available cores</span></span></code></pre></div>
-<pre><code>## INFO  [12:50:17.585] epoch 1, loss 0.2268
-## INFO  [12:50:18.547] epoch 2, loss 0.0768
-## INFO  [12:50:19.495] epoch 3, loss 0.0497
-## INFO  [12:50:20.463] epoch 4, loss 0.0375
-## INFO  [12:50:21.444] epoch 5, loss 0.0303
-## INFO  [12:50:22.386] epoch 6, loss 0.0256
-## INFO  [12:50:23.361] epoch 7, loss 0.0223
-## INFO  [12:50:24.369] epoch 8, loss 0.0198
-## INFO  [12:50:25.387] epoch 9, loss 0.0178
-## INFO  [12:50:26.321] epoch 10, loss 0.0163</code></pre>
-<div class="sourceCode" id="cb66"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>wv_context <span class="ot">&lt;-</span> glove<span class="sc">$</span>components</span>
-<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>local_glove <span class="ot">&lt;-</span> wv_main <span class="sc">+</span> <span class="fu">t</span>(wv_context) <span class="co"># word vectors</span></span>
-<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-4"><a href="#cb66-4" aria-hidden="true" tabindex="-1"></a><span class="co"># qualitative check</span></span>
-<span id="cb66-5"><a href="#cb66-5" aria-hidden="true" tabindex="-1"></a><span class="fu">find_nns</span>(local_glove[<span class="st">&#39;immigration&#39;</span>,], <span class="at">pre_trained =</span> local_glove, <span class="at">N =</span> <span class="dv">5</span>, <span class="at">candidates =</span> feats)</span></code></pre></div>
-<pre><code>## [1] &quot;immigration&quot; &quot;president&quot;   &quot;bill&quot;        &quot;law&quot;         &quot;congress&quot;</code></pre>
+<div class="sourceCode" id="cb62"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" tabindex="-1"></a><span class="fu">library</span>(text2vec)</span>
+<span id="cb62-2"><a href="#cb62-2" tabindex="-1"></a></span>
+<span id="cb62-3"><a href="#cb62-3" tabindex="-1"></a><span class="co">#---------------------------------</span></span>
+<span id="cb62-4"><a href="#cb62-4" tabindex="-1"></a><span class="co"># estimate glove model</span></span>
+<span id="cb62-5"><a href="#cb62-5" tabindex="-1"></a><span class="co">#---------------------------------</span></span>
+<span id="cb62-6"><a href="#cb62-6" tabindex="-1"></a></span>
+<span id="cb62-7"><a href="#cb62-7" tabindex="-1"></a><span class="co"># construct the feature co-occurrence matrix for our toks_nostop_feats object (see above)</span></span>
+<span id="cb62-8"><a href="#cb62-8" tabindex="-1"></a>toks_fcm <span class="ot">&lt;-</span> <span class="fu">fcm</span>(toks_nostop_feats, <span class="at">context =</span> <span class="st">&quot;window&quot;</span>, <span class="at">window =</span> <span class="dv">6</span>, <span class="at">count =</span> <span class="st">&quot;frequency&quot;</span>, <span class="at">tri =</span> <span class="cn">FALSE</span>) <span class="co"># important to set tri = FALSE</span></span>
+<span id="cb62-9"><a href="#cb62-9" tabindex="-1"></a></span>
+<span id="cb62-10"><a href="#cb62-10" tabindex="-1"></a><span class="co"># estimate glove model using text2vec</span></span>
+<span id="cb62-11"><a href="#cb62-11" tabindex="-1"></a>glove <span class="ot">&lt;-</span> GlobalVectors<span class="sc">$</span><span class="fu">new</span>(<span class="at">rank =</span> <span class="dv">300</span>, </span>
+<span id="cb62-12"><a href="#cb62-12" tabindex="-1"></a>                           <span class="at">x_max =</span> <span class="dv">10</span>,</span>
+<span id="cb62-13"><a href="#cb62-13" tabindex="-1"></a>                           <span class="at">learning_rate =</span> <span class="fl">0.05</span>)</span>
+<span id="cb62-14"><a href="#cb62-14" tabindex="-1"></a>wv_main <span class="ot">&lt;-</span> glove<span class="sc">$</span><span class="fu">fit_transform</span>(toks_fcm, <span class="at">n_iter =</span> <span class="dv">10</span>,</span>
+<span id="cb62-15"><a href="#cb62-15" tabindex="-1"></a>                               <span class="at">convergence_tol =</span> <span class="fl">1e-3</span>, </span>
+<span id="cb62-16"><a href="#cb62-16" tabindex="-1"></a>                               <span class="at">n_threads =</span> <span class="dv">2</span>) <span class="co"># set to &#39;parallel::detectCores()&#39; to use all available cores</span></span></code></pre></div>
+<pre><code>## INFO  [15:37:19.780] epoch 1, loss 0.2279
+## INFO  [15:37:20.637] epoch 2, loss 0.0771
+## INFO  [15:37:21.484] epoch 3, loss 0.0500
+## INFO  [15:37:22.341] epoch 4, loss 0.0376
+## INFO  [15:37:23.202] epoch 5, loss 0.0304
+## INFO  [15:37:24.058] epoch 6, loss 0.0257
+## INFO  [15:37:24.914] epoch 7, loss 0.0223
+## INFO  [15:37:25.786] epoch 8, loss 0.0198
+## INFO  [15:37:26.647] epoch 9, loss 0.0179
+## INFO  [15:37:27.502] epoch 10, loss 0.0163</code></pre>
+<div class="sourceCode" id="cb64"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" tabindex="-1"></a>wv_context <span class="ot">&lt;-</span> glove<span class="sc">$</span>components</span>
+<span id="cb64-2"><a href="#cb64-2" tabindex="-1"></a>local_glove <span class="ot">&lt;-</span> wv_main <span class="sc">+</span> <span class="fu">t</span>(wv_context) <span class="co"># word vectors</span></span>
+<span id="cb64-3"><a href="#cb64-3" tabindex="-1"></a></span>
+<span id="cb64-4"><a href="#cb64-4" tabindex="-1"></a><span class="co"># qualitative check</span></span>
+<span id="cb64-5"><a href="#cb64-5" tabindex="-1"></a><span class="fu">find_nns</span>(local_glove[<span class="st">&#39;immigration&#39;</span>,], <span class="at">pre_trained =</span> local_glove, <span class="at">N =</span> <span class="dv">5</span>, <span class="at">candidates =</span> feats)</span></code></pre></div>
+<pre><code>## [1] &quot;immigration&quot; &quot;president&quot;   &quot;bill&quot;        &quot;law&quot;         &quot;states&quot;</code></pre>
 <h2 id="estimating-the-transformation-matrix">Estimating the
 transformation matrix</h2>
 <p>Given a corpus and it’s corresponding GloVe embeddings, we can
 compute a corresponding transformation matrix using
 <code>conText::compute_transform()</code>.</p>
-<div class="sourceCode" id="cb68"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="co"># compute transform</span></span>
-<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a><span class="co"># weighting = &#39;log&#39; works well for smaller corpora</span></span>
-<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a><span class="co"># for large corpora use a numeric value e.g. weighting = 500</span></span>
-<span id="cb68-4"><a href="#cb68-4" aria-hidden="true" tabindex="-1"></a><span class="co"># see: https://arxiv.org/pdf/1805.05388.pdf</span></span>
-<span id="cb68-5"><a href="#cb68-5" aria-hidden="true" tabindex="-1"></a>local_transform <span class="ot">&lt;-</span> <span class="fu">compute_transform</span>(<span class="at">x =</span> toks_fcm, <span class="at">pre_trained =</span> local_glove, <span class="at">weighting =</span> <span class="st">&#39;log&#39;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb66"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" tabindex="-1"></a><span class="co"># compute transform</span></span>
+<span id="cb66-2"><a href="#cb66-2" tabindex="-1"></a><span class="co"># weighting = &#39;log&#39; works well for smaller corpora</span></span>
+<span id="cb66-3"><a href="#cb66-3" tabindex="-1"></a><span class="co"># for large corpora use a numeric value e.g. weighting = 500</span></span>
+<span id="cb66-4"><a href="#cb66-4" tabindex="-1"></a><span class="co"># see: https://arxiv.org/pdf/1805.05388.pdf</span></span>
+<span id="cb66-5"><a href="#cb66-5" tabindex="-1"></a>local_transform <span class="ot">&lt;-</span> <span class="fu">compute_transform</span>(<span class="at">x =</span> toks_fcm, <span class="at">pre_trained =</span> local_glove, <span class="at">weighting =</span> <span class="st">&#39;log&#39;</span>)</span></code></pre></div>
 <p>You should always run some sanity checks to make sure the computed
 transformation matrix produces sensical results (keep in mind the corpus
 in this example consists of only 200 documents). A more robust approach
@@ -1414,24 +1454,24 @@ which have a corresponding pre-trained embedding. Use the transformation
 matrix and pre-trained embeddings to compute ALC embeddings for these
 excluded features and check their similarity with their corresponding
 pre-trained embeddings (it should be reasonably high, &gt; 0.6).</p>
-<div class="sourceCode" id="cb69"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="co">#---------------------------------</span></span>
-<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a><span class="co"># check</span></span>
-<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a><span class="co">#---------------------------------</span></span>
-<span id="cb69-4"><a href="#cb69-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb69-5"><a href="#cb69-5" aria-hidden="true" tabindex="-1"></a><span class="co"># create document-embedding matrix using our locally trained GloVe embeddings and transformation matrix</span></span>
-<span id="cb69-6"><a href="#cb69-6" aria-hidden="true" tabindex="-1"></a>immig_dem_local <span class="ot">&lt;-</span> <span class="fu">dem</span>(<span class="at">x =</span> immig_dfm, <span class="at">pre_trained =</span> local_glove, <span class="at">transform =</span> <span class="cn">TRUE</span>, <span class="at">transform_matrix =</span> local_transform, <span class="at">verbose =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb69-7"><a href="#cb69-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb69-8"><a href="#cb69-8" aria-hidden="true" tabindex="-1"></a><span class="co"># take the column average to get a single &quot;corpus-wide&quot; embedding</span></span>
-<span id="cb69-9"><a href="#cb69-9" aria-hidden="true" tabindex="-1"></a>immig_wv_local <span class="ot">&lt;-</span> <span class="fu">colMeans</span>(immig_dem_local)</span>
-<span id="cb69-10"><a href="#cb69-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb69-11"><a href="#cb69-11" aria-hidden="true" tabindex="-1"></a><span class="co"># find nearest neighbors for overall immigraiton embedding</span></span>
-<span id="cb69-12"><a href="#cb69-12" aria-hidden="true" tabindex="-1"></a><span class="fu">find_nns</span>(immig_wv_local, <span class="at">pre_trained =</span> local_glove, <span class="at">N =</span> <span class="dv">10</span>, <span class="at">candidates =</span> immig_dem_local<span class="sc">@</span>features)</span></code></pre></div>
-<pre><code>##  [1] &quot;immigration&quot; &quot;bill&quot;        &quot;illegal&quot;     &quot;country&quot;     &quot;states&quot;     
-##  [6] &quot;law&quot;         &quot;president&quot;   &quot;united&quot;      &quot;reform&quot;      &quot;people&quot;</code></pre>
-<div class="sourceCode" id="cb71"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="co"># we can also compare to corresponding pre-trained embedding</span></span>
-<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sim2</span>(<span class="at">x =</span> <span class="fu">matrix</span>(immig_wv_local, <span class="at">nrow =</span> <span class="dv">1</span>), <span class="at">y =</span> <span class="fu">matrix</span>(local_glove[<span class="st">&#39;immigration&#39;</span>,], <span class="at">nrow =</span> <span class="dv">1</span>), <span class="at">method =</span> <span class="st">&#39;cosine&#39;</span>, <span class="at">norm =</span> <span class="st">&#39;l2&#39;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb67"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" tabindex="-1"></a><span class="co">#---------------------------------</span></span>
+<span id="cb67-2"><a href="#cb67-2" tabindex="-1"></a><span class="co"># check</span></span>
+<span id="cb67-3"><a href="#cb67-3" tabindex="-1"></a><span class="co">#---------------------------------</span></span>
+<span id="cb67-4"><a href="#cb67-4" tabindex="-1"></a></span>
+<span id="cb67-5"><a href="#cb67-5" tabindex="-1"></a><span class="co"># create document-embedding matrix using our locally trained GloVe embeddings and transformation matrix</span></span>
+<span id="cb67-6"><a href="#cb67-6" tabindex="-1"></a>immig_dem_local <span class="ot">&lt;-</span> <span class="fu">dem</span>(<span class="at">x =</span> immig_dfm, <span class="at">pre_trained =</span> local_glove, <span class="at">transform =</span> <span class="cn">TRUE</span>, <span class="at">transform_matrix =</span> local_transform, <span class="at">verbose =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb67-7"><a href="#cb67-7" tabindex="-1"></a></span>
+<span id="cb67-8"><a href="#cb67-8" tabindex="-1"></a><span class="co"># take the column average to get a single &quot;corpus-wide&quot; embedding</span></span>
+<span id="cb67-9"><a href="#cb67-9" tabindex="-1"></a>immig_wv_local <span class="ot">&lt;-</span> <span class="fu">colMeans</span>(immig_dem_local)</span>
+<span id="cb67-10"><a href="#cb67-10" tabindex="-1"></a></span>
+<span id="cb67-11"><a href="#cb67-11" tabindex="-1"></a><span class="co"># find nearest neighbors for overall immigration embedding</span></span>
+<span id="cb67-12"><a href="#cb67-12" tabindex="-1"></a><span class="fu">find_nns</span>(immig_wv_local, <span class="at">pre_trained =</span> local_glove, <span class="at">N =</span> <span class="dv">10</span>, <span class="at">candidates =</span> immig_dem_local<span class="sc">@</span>features)</span></code></pre></div>
+<pre><code>##  [1] &quot;immigration&quot; &quot;bill&quot;        &quot;illegal&quot;     &quot;system&quot;      &quot;reform&quot;     
+##  [6] &quot;law&quot;         &quot;states&quot;      &quot;now&quot;         &quot;people&quot;      &quot;come&quot;</code></pre>
+<div class="sourceCode" id="cb69"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" tabindex="-1"></a><span class="co"># we can also compare to corresponding pre-trained embedding</span></span>
+<span id="cb69-2"><a href="#cb69-2" tabindex="-1"></a><span class="fu">sim2</span>(<span class="at">x =</span> <span class="fu">matrix</span>(immig_wv_local, <span class="at">nrow =</span> <span class="dv">1</span>), <span class="at">y =</span> <span class="fu">matrix</span>(local_glove[<span class="st">&#39;immigration&#39;</span>,], <span class="at">nrow =</span> <span class="dv">1</span>), <span class="at">method =</span> <span class="st">&#39;cosine&#39;</span>, <span class="at">norm =</span> <span class="st">&#39;l2&#39;</span>)</span></code></pre></div>
 <pre><code>##           [,1]
-## [1,] 0.7926645</code></pre>
+## [1,] 0.8078914</code></pre>
 <h1 id="other">Other</h1>
 <h2 id="feature-embedding-matrix">Feature embedding matrix</h2>
 <p>We may be interested in simultaneously embedding many features. This
@@ -1441,34 +1481,35 @@ that can subsequently be fed into a downstream classification task.
 We’ll focus on (1) here. Using the same tokenized
 <code>cr_sample_corpus</code> we start by building a
 feature-co-occurrence matrix for each group (party).</p>
-<div class="sourceCode" id="cb73"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="co"># create feature co-occurrence matrix for each party (set tri = FALSE to work with fem)</span></span>
-<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a>fcm_D <span class="ot">&lt;-</span> <span class="fu">fcm</span>(toks_nostop_feats[<span class="fu">docvars</span>(toks_nostop_feats, <span class="st">&#39;party&#39;</span>) <span class="sc">==</span> <span class="st">&quot;D&quot;</span>,], <span class="at">context =</span> <span class="st">&quot;window&quot;</span>, <span class="at">window =</span> <span class="dv">6</span>, <span class="at">count =</span> <span class="st">&quot;frequency&quot;</span>, <span class="at">tri =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a>fcm_R <span class="ot">&lt;-</span> <span class="fu">fcm</span>(toks_nostop_feats[<span class="fu">docvars</span>(toks_nostop_feats, <span class="st">&#39;party&#39;</span>) <span class="sc">==</span> <span class="st">&quot;R&quot;</span>,], <span class="at">context =</span> <span class="st">&quot;window&quot;</span>, <span class="at">window =</span> <span class="dv">6</span>, <span class="at">count =</span> <span class="st">&quot;frequency&quot;</span>, <span class="at">tri =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb71"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" tabindex="-1"></a><span class="co"># create feature co-occurrence matrix for each party (set tri = FALSE to work with fem)</span></span>
+<span id="cb71-2"><a href="#cb71-2" tabindex="-1"></a>fcm_D <span class="ot">&lt;-</span> <span class="fu">fcm</span>(toks_nostop_feats[<span class="fu">docvars</span>(toks_nostop_feats, <span class="st">&#39;party&#39;</span>) <span class="sc">==</span> <span class="st">&quot;D&quot;</span>,], <span class="at">context =</span> <span class="st">&quot;window&quot;</span>, <span class="at">window =</span> <span class="dv">6</span>, <span class="at">count =</span> <span class="st">&quot;frequency&quot;</span>, <span class="at">tri =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb71-3"><a href="#cb71-3" tabindex="-1"></a>fcm_R <span class="ot">&lt;-</span> <span class="fu">fcm</span>(toks_nostop_feats[<span class="fu">docvars</span>(toks_nostop_feats, <span class="st">&#39;party&#39;</span>) <span class="sc">==</span> <span class="st">&quot;R&quot;</span>,], <span class="at">context =</span> <span class="st">&quot;window&quot;</span>, <span class="at">window =</span> <span class="dv">6</span>, <span class="at">count =</span> <span class="st">&quot;frequency&quot;</span>, <span class="at">tri =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
 <p>Given an <code>fcm</code> for each group, we can proceed to compute a
 corresponding “feature-embedding-matrix” for each group.</p>
-<div class="sourceCode" id="cb74"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="co"># compute feature-embedding matrix</span></span>
-<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a>fem_D <span class="ot">&lt;-</span> <span class="fu">fem</span>(fcm_D, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">transform =</span> <span class="cn">TRUE</span>, <span class="at">transform_matrix =</span> cr_transform, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a>fem_R <span class="ot">&lt;-</span> <span class="fu">fem</span>(fcm_R, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">transform =</span> <span class="cn">TRUE</span>, <span class="at">transform_matrix =</span> cr_transform, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb74-4"><a href="#cb74-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb74-5"><a href="#cb74-5" aria-hidden="true" tabindex="-1"></a><span class="co"># cr_fem will contain an embedding for each feature</span></span>
-<span id="cb74-6"><a href="#cb74-6" aria-hidden="true" tabindex="-1"></a>fem_D[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>]</span></code></pre></div>
+<div class="sourceCode" id="cb72"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" tabindex="-1"></a><span class="co"># compute feature-embedding matrix</span></span>
+<span id="cb72-2"><a href="#cb72-2" tabindex="-1"></a>fem_D <span class="ot">&lt;-</span> <span class="fu">fem</span>(fcm_D, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">transform =</span> <span class="cn">TRUE</span>, <span class="at">transform_matrix =</span> cr_transform, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb72-3"><a href="#cb72-3" tabindex="-1"></a>fem_R <span class="ot">&lt;-</span> <span class="fu">fem</span>(fcm_R, <span class="at">pre_trained =</span> cr_glove_subset, <span class="at">transform =</span> <span class="cn">TRUE</span>, <span class="at">transform_matrix =</span> cr_transform, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb72-4"><a href="#cb72-4" tabindex="-1"></a></span>
+<span id="cb72-5"><a href="#cb72-5" tabindex="-1"></a><span class="co"># cr_fem will contain an embedding for each feature</span></span>
+<span id="cb72-6"><a href="#cb72-6" tabindex="-1"></a>fem_D[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>]</span></code></pre></div>
 <pre><code>## 5 x 3 sparse Matrix of class &quot;dgCMatrix&quot;
-##                                        
-## president 0.3744276 0.2664312 0.5106154
-## rise      0.6826160 0.1579899 0.1132372
-## today     0.5012829 0.1986229 0.1827530
-## honor     0.6683875 0.3323882 0.2093607
-## one       0.5223592 0.4007449 0.2207826</code></pre>
+##            columns
+## rows                                     
+##   president 0.3744276 0.2664312 0.5106154
+##   rise      0.6826160 0.1579899 0.1132372
+##   today     0.5012829 0.1986229 0.1827530
+##   honor     0.6683875 0.3323882 0.2093607
+##   one       0.5223592 0.4007449 0.2207826</code></pre>
 <p>Finally, we can use the <code>conText::feature_sim</code> function to
 compute “horizontal” cosine similarities between both <code>fem</code>s
 for the set of overlapping features. The output of
 <code>feature_sim</code> is ranked from least similar to most similar
 features.</p>
-<div class="sourceCode" id="cb76"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a><span class="co"># compute &quot;horizontal&quot; cosine similarity</span></span>
-<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>feat_comp <span class="ot">&lt;-</span> <span class="fu">feature_sim</span>(<span class="at">x =</span> fem_R, <span class="at">y =</span> fem_D)</span>
-<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb76-4"><a href="#cb76-4" aria-hidden="true" tabindex="-1"></a><span class="co"># least similar features</span></span>
-<span id="cb76-5"><a href="#cb76-5" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(feat_comp)</span></code></pre></div>
+<div class="sourceCode" id="cb74"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" tabindex="-1"></a><span class="co"># compute &quot;horizontal&quot; cosine similarity</span></span>
+<span id="cb74-2"><a href="#cb74-2" tabindex="-1"></a>feat_comp <span class="ot">&lt;-</span> <span class="fu">feature_sim</span>(<span class="at">x =</span> fem_R, <span class="at">y =</span> fem_D)</span>
+<span id="cb74-3"><a href="#cb74-3" tabindex="-1"></a></span>
+<span id="cb74-4"><a href="#cb74-4" tabindex="-1"></a><span class="co"># least similar features</span></span>
+<span id="cb74-5"><a href="#cb74-5" tabindex="-1"></a><span class="fu">head</span>(feat_comp)</span></code></pre></div>
 <pre><code>##       feature      value
 ## 1        link -0.2160803
 ## 2  guantanamo -0.1859814
@@ -1476,8 +1517,8 @@ features.</p>
 ## 4    opposite -0.1807265
 ## 5        draw -0.1754296
 ## 6     refuses -0.1743808</code></pre>
-<div class="sourceCode" id="cb78"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a><span class="co"># most similar features</span></span>
-<span id="cb78-2"><a href="#cb78-2" aria-hidden="true" tabindex="-1"></a><span class="fu">tail</span>(feat_comp)</span></code></pre></div>
+<div class="sourceCode" id="cb76"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" tabindex="-1"></a><span class="co"># most similar features</span></span>
+<span id="cb76-2"><a href="#cb76-2" tabindex="-1"></a><span class="fu">tail</span>(feat_comp)</span></code></pre></div>
 <pre><code>##          feature     value
 ## 3501     customs 0.9514645
 ## 3502      border 0.9520096
@@ -1497,20 +1538,18 @@ question. Responses to open-ended survey questions is a good example
 a subset of the <code>cr_sample_corpus</code>. In particular, note the
 use of the <code>. ~</code> operator to indicate that the full document
 should be used as the DV.</p>
-<div class="sourceCode" id="cb80"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="co"># identify documents with fewer than 100 words</span></span>
-<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>short_toks <span class="ot">&lt;-</span> toks_nostop_feats[<span class="fu">sapply</span>(toks_nostop_feats, length) <span class="sc">&lt;=</span> <span class="dv">100</span>,]</span>
-<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a><span class="co"># run regression on full documents</span></span>
-<span id="cb80-5"><a href="#cb80-5" aria-hidden="true" tabindex="-1"></a>model3 <span class="ot">&lt;-</span> <span class="fu">conText</span>(<span class="at">formula =</span> . <span class="sc">~</span> party,</span>
-<span id="cb80-6"><a href="#cb80-6" aria-hidden="true" tabindex="-1"></a>                  <span class="at">data =</span> short_toks,</span>
-<span id="cb80-7"><a href="#cb80-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">pre_trained =</span> cr_glove_subset,</span>
-<span id="cb80-8"><a href="#cb80-8" aria-hidden="true" tabindex="-1"></a>                  <span class="at">transform =</span> <span class="cn">TRUE</span>, <span class="at">transform_matrix =</span> cr_transform,</span>
-<span id="cb80-9"><a href="#cb80-9" aria-hidden="true" tabindex="-1"></a>                  <span class="at">bootstrap =</span> <span class="cn">TRUE</span>, <span class="at">num_bootstraps =</span> <span class="dv">100</span>,</span>
-<span id="cb80-10"><a href="#cb80-10" aria-hidden="true" tabindex="-1"></a>                  <span class="at">permute =</span> <span class="cn">TRUE</span>, <span class="at">num_permutations =</span> <span class="dv">100</span>,</span>
-<span id="cb80-11"><a href="#cb80-11" aria-hidden="true" tabindex="-1"></a>                  <span class="at">window =</span> <span class="dv">6</span>, <span class="at">case_insensitive =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb80-12"><a href="#cb80-12" aria-hidden="true" tabindex="-1"></a>                  <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
-<pre><code>##   coefficient normed.estimate std.error lower.ci upper.ci p.value
-## 1     party_R        3.878352 0.3682709  3.29526 4.493428       0</code></pre>
+<div class="sourceCode" id="cb78"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" tabindex="-1"></a><span class="co"># identify documents with fewer than 100 words</span></span>
+<span id="cb78-2"><a href="#cb78-2" tabindex="-1"></a>short_toks <span class="ot">&lt;-</span> toks_nostop_feats[<span class="fu">sapply</span>(toks_nostop_feats, length) <span class="sc">&lt;=</span> <span class="dv">100</span>,]</span>
+<span id="cb78-3"><a href="#cb78-3" tabindex="-1"></a></span>
+<span id="cb78-4"><a href="#cb78-4" tabindex="-1"></a><span class="co"># run regression on full documents</span></span>
+<span id="cb78-5"><a href="#cb78-5" tabindex="-1"></a>model3 <span class="ot">&lt;-</span> <span class="fu">conText</span>(<span class="at">formula =</span> . <span class="sc">~</span> party,</span>
+<span id="cb78-6"><a href="#cb78-6" tabindex="-1"></a>                  <span class="at">data =</span> short_toks,</span>
+<span id="cb78-7"><a href="#cb78-7" tabindex="-1"></a>                  <span class="at">pre_trained =</span> cr_glove_subset,</span>
+<span id="cb78-8"><a href="#cb78-8" tabindex="-1"></a>                  <span class="at">transform =</span> <span class="cn">TRUE</span>, <span class="at">transform_matrix =</span> cr_transform,</span>
+<span id="cb78-9"><a href="#cb78-9" tabindex="-1"></a>                  <span class="at">jackknife =</span> <span class="cn">FALSE</span>, <span class="at">confidence_level =</span> <span class="fl">0.95</span>,</span>
+<span id="cb78-10"><a href="#cb78-10" tabindex="-1"></a>                  <span class="at">permute =</span> <span class="cn">TRUE</span>, <span class="at">num_permutations =</span> <span class="dv">100</span>,</span>
+<span id="cb78-11"><a href="#cb78-11" tabindex="-1"></a>                  <span class="at">window =</span> <span class="dv">6</span>, <span class="at">case_insensitive =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb78-12"><a href="#cb78-12" tabindex="-1"></a>                  <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
 
 </body>
 </html>

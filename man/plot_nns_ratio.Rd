@@ -34,9 +34,9 @@ toks <- tokens(cr_sample_corpus)
 # build a tokenized corpus of contexts sorrounding a target term
 immig_toks <- tokens_context(x = toks, pattern = "immigration", window = 6L)
 
-# sample 100 instances of the target term, stratifying by party (only for example purposes)
+# sample 50 instances of the target term, stratifying by party (only for example purposes)
 set.seed(2022L)
-immig_toks <- tokens_sample(immig_toks, size = 100, by = docvars(immig_toks, 'party'))
+immig_toks <- tokens_sample(immig_toks, size = 50, by = docvars(immig_toks, 'party'))
 
 # we limit candidates to features in our corpus
 feats <- featnames(dfm(immig_toks))
@@ -52,7 +52,7 @@ immig_nns_ratio <- get_nns_ratio(x = immig_toks,
                                  transform = TRUE,
                                  transform_matrix = cr_transform,
                                  bootstrap = FALSE,
-                                 num_bootstraps = 100,
+                                 # if bootstrap = TRUE, num_bootstraps should be at least 100,
                                  permute = FALSE,
                                  num_permutations = 10,
                                  verbose = FALSE)

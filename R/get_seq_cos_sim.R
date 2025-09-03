@@ -21,7 +21,6 @@
 #' @examples
 #'
 #' library(quanteda)
-#'
 #' # gen sequence var (here: year)
 #' docvars(cr_sample_corpus, 'year') <- rep(2011:2014, each = 50)
 #' cos_simsdf <- get_seq_cos_sim(x = cr_sample_corpus,

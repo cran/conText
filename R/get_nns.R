@@ -43,9 +43,9 @@
 #' # build a tokenized corpus of contexts sorrounding a target term
 #' immig_toks <- tokens_context(x = toks, pattern = "immigration", window = 6L)
 #'
-#' # sample 100 instances of the target term, stratifying by party (only for example purposes)
+#' # sample 50 instances of the target term, stratifying by party (only for example purposes)
 #' set.seed(2022L)
-#' immig_toks <- tokens_sample(immig_toks, size = 100, by = docvars(immig_toks, 'party'))
+#' immig_toks <- tokens_sample(immig_toks, size = 50, by = docvars(immig_toks, 'party'))
 #'
 #' # we limit candidates to features in our corpus
 #' feats <- featnames(dfm(immig_toks))
@@ -112,6 +112,7 @@ get_nns <- function(x,
                            candidates = candidates,
                            pre_trained = pre_trained,
                            stem = stem,
+                           language = language,
                            as_list = FALSE),
               simplify = FALSE)
     result <- do.call(rbind, nnsdf_bs) %>%
@@ -140,7 +141,7 @@ get_nns <- function(x,
   }
 
   # find nearest neighbors
-  result <- nns(x = wvs, N = N, candidates = candidates, pre_trained = pre_trained, stem = stem, as_list = FALSE, show_language = FALSE)
+  result <- nns(x = wvs, N = N, candidates = candidates, pre_trained = pre_trained, stem = stem, language = language, as_list = FALSE, show_language = FALSE)
   }
 
   # if !as_list return a list object with an item for each target data.frame
@@ -158,6 +159,7 @@ nns_boostrap <- function(x,
                          candidates = character(0),
                          pre_trained,
                          stem = FALSE,
+                         language = language,
                          as_list = FALSE){
 
   # sample dems with replacement
@@ -171,7 +173,7 @@ nns_boostrap <- function(x,
   }
 
   # find nearest neighbors
-  result <- nns(x = wvs, N = Inf, candidates = candidates, pre_trained = pre_trained, stem = stem, as_list = as_list, show_language = FALSE)
+  result <- nns(x = wvs, N = Inf, candidates = candidates, pre_trained = pre_trained, stem = stem, language = language, as_list = as_list, show_language = FALSE)
 
   return(result)
 

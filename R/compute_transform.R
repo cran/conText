@@ -26,8 +26,9 @@
 #' @keywords compute_transform
 #' @examples
 #'
+#' \dontrun{
+#' # example exceeds CRAN CPU time to elapsed time limit
 #' library(quanteda)
-#'
 #' # note, cr_sample_corpus is too small to produce sensical word vectors
 #'
 #' # tokenize
@@ -44,6 +45,7 @@
 #' # estimate transform
 #' local_transform <- compute_transform(x = toks_fcm,
 #' pre_trained = cr_glove_subset, weighting = 'log')
+#' }
 compute_transform <- function(x, pre_trained, weighting = 500){
 
   # compute un-transformed additive embedding
@@ -51,7 +53,8 @@ compute_transform <- function(x, pre_trained, weighting = 500){
 
   # extract feature frequency from fcm object
   feature_frequency <- x@meta$object$margin
-  feature_frequency <- feature_frequency[intersect(names(feature_frequency), attr(context_embeddings, 'features'))]
+  feature_frequency <- feature_frequency[intersect(names(feature_frequency), rownames(context_embeddings))]
+  feature_frequency <- feature_frequency[intersect(names(feature_frequency), rownames(pre_trained))] # only use overlap btw pretrained and context embeddings (when pretrained embeddings are not trained on local corpus)
   if(weighting == 'log') feature_frequency <- feature_frequency[feature_frequency >= 1] # avoid negatives when taking logs
 
   # apply weighting if given

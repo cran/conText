@@ -10,12 +10,13 @@ conText(
   pre_trained,
   transform = TRUE,
   transform_matrix,
-  bootstrap = TRUE,
-  num_bootstraps = 100,
+  jackknife = TRUE,
   confidence_level = 0.95,
-  stratify = FALSE,
+  jackknife_fraction = 1,
+  parallel = FALSE,
   permute = TRUE,
   num_permutations = 100,
+  cluster_variable = NULL,
   window = 6L,
   valuetype = c("glob", "regex", "fixed"),
   case_insensitive = TRUE,
@@ -33,7 +34,7 @@ on the RHS use \code{immigrant ~ .}. Any \code{character} or \code{factor} covar
 to a set of binary (\code{0/1}s) indicator variables for each group, leaving the first level out of the regression.}
 
 \item{data}{a quanteda \code{tokens-class} object with the necessary document variables. Covariates must be
-either binary indicator variables or "trasnformable" into binary indicator variables. conText will automatically
+either binary indicator variables or "transformable" into binary indicator variables. conText will automatically
 transform any non-indicator variables into binary indicator variables (multiple if more than 2 classes),
 leaving out a "base" category.}
 
@@ -47,18 +48,19 @@ if FALSE ouput untransformed averaged embeddings.}
 \item{transform_matrix}{(numeric) a D x D 'a la carte' transformation matrix.
 D = dimensions of pretrained embeddings.}
 
-\item{bootstrap}{(logical) if TRUE, use bootstrapping -- sample from texts with replacement and
-re-run regression on each sample. Required to get std. errors.}
-
-\item{num_bootstraps}{(numeric) number of bootstraps to use (at least 100)}
+\item{jackknife}{(logical) if TRUE, use jackknife (leave one out) to estimate standard errors. Implies n resamples.}
 
 \item{confidence_level}{(numeric in (0,1)) confidence level e.g. 0.95}
 
-\item{stratify}{(logical) if TRUE, stratify by discrete covariates when bootstrapping.}
+\item{jackknife_fraction}{(numeric) fraction of data to use in jackknife. Useful for large datasets.}
+
+\item{parallel}{(logical) if TRUE, use parallel processing. Requires a registered parallel backend (see doParallel() for more information).}
 
 \item{permute}{(logical) if TRUE, compute empirical p-values using permutation test}
 
 \item{num_permutations}{(numeric) number of permutations to use}
+
+\item{cluster_variable}{(character) name of the variable to use for clustering.}
 
 \item{window}{the number of context words to be displayed around the keyword}
 
@@ -85,11 +87,13 @@ The object also includes various informative attributes, importantly
 a \code{data.frame} with the following columns:
 \describe{
 \item{\code{coefficient}}{(character) name of (covariate) coefficient.}
-\item{\code{value}}{(numeric) norm of the corresponding beta coefficient.}
-\item{\code{std.error}}{(numeric) (if bootstrap = TRUE) std. error of the norm of the beta coefficient.}
-\item{\code{lower.ci}}{(numeric) (if bootstrap = TRUE) lower bound of the confidence interval.}
-\item{\code{upper.ci}}{(numeric) (if bootstrap = TRUE) upper bound of the confidence interval.}
-\item{\code{p.value}}{(numeric) (if permute = TRUE) empirical p.value of the norm of the coefficient.}
+\item{\code{normed.estimate.orig}}{(numeric) squared norm of the corresponding beta coefficient.}
+\item{\code{normed.estimate.deflated}}{(numeric) debiased squared norm of the corresponding beta coefficient.}
+\item{\code{normed.estimate.beta.error.null}}{(numeric) estimate of the bias term in the the original squared norm.}
+\item{\code{std.error}}{(numeric) (if jackknife = TRUE) std. error of the debiased squared norm of the beta coefficient.}
+\item{\code{lower.ci}}{(numeric) (if jackknife = TRUE) lower bound of the confidence interval.}
+\item{\code{upper.ci}}{(numeric) (if jackknife = TRUE) upper bound of the confidence interval.}
+\item{\code{p.value}}{(numeric) (if permute = TRUE) empirical p.value of the debiased squared norm of the coefficient.}
 }
 }
 \description{
@@ -102,18 +106,16 @@ library(quanteda)
 
 # tokenize corpus
 toks <- tokens(cr_sample_corpus)
-
 ## given the target word "immigration"
 set.seed(2021L)
 model1 <- conText(formula = immigration ~ party + gender,
                  data = toks,
                  pre_trained = cr_glove_subset,
                  transform = TRUE, transform_matrix = cr_transform,
-                 bootstrap = TRUE,
-                 num_bootstraps = 100,
+                 jackknife = FALSE,
                  confidence_level = 0.95,
-                 stratify = FALSE,
-                 permute = TRUE, num_permutations = 10,
+                 permute = TRUE, num_permutations = 100,
+                 cluster_variable = NULL,
                  window = 6, case_insensitive = TRUE,
                  verbose = FALSE)
 
